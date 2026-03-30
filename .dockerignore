@@ -1,0 +1,77 @@
+# =============================================================================
+# .dockerignore — controls what is sent to the Docker build daemon
+#
+# The build context is the entire repo root (docker compose sends everything
+# in . to the daemon unless listed here). Excluding unnecessary files:
+#   • Reduces build context size (faster uploads to the daemon)
+#   • Prevents secrets (.env) from being baked into layers
+#   • Prevents stale build artefacts from invalidating the COPY . . cache hit
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Secrets — must never enter the build context
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.secret
+*.pem
+*.key
+*.p12
+*.jks
+
+# ---------------------------------------------------------------------------
+# Version control metadata
+# ---------------------------------------------------------------------------
+.git
+.gitignore
+.gitattributes
+
+# ---------------------------------------------------------------------------
+# IDE and editor config
+# ---------------------------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.factorypath
+.settings/
+.classpath
+.project
+
+# ---------------------------------------------------------------------------
+# OS artefacts
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Maven build output
+# Prevents compiled classes from invalidating the COPY . . layer in Stage 2
+# (builder). If target/ exists locally, Docker would otherwise pick it up
+# and the mvn clean in Stage 2 would spend time cleaning it anyway.
+# ---------------------------------------------------------------------------
+**/target/
+!**/src/
+
+# ---------------------------------------------------------------------------
+# Docker files (not needed inside the image)
+# ---------------------------------------------------------------------------
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# ---------------------------------------------------------------------------
+# Documentation and CI config (reduce context size)
+# ---------------------------------------------------------------------------
+*.md
+*.txt
+docs/
+.github/
+.gitlab-ci.yml
+
+# ---------------------------------------------------------------------------
+# Local development overrides
+# ---------------------------------------------------------------------------
+**/*.local.yml
+**/*-local.properties

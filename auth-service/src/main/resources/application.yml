@@ -1,0 +1,73 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: auth-service
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:mysql://localhost:3306/mydb
+    username: ${DB_USERNAME:zayed}
+    password: ${DB_PASSWORD:zayed}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+#    host: ${SMTP_HOST:localhost}
+#    port: ${SMTP_PORT:2525}
+    host: ${SMTP_HOST:192.168.29.50}
+    port: ${SMTP_PORT:2525}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            required: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+        debug: true
+
+
+application:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      access-token:
+        expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000} # 15 minutes (reduced to 15 minutes from 1 hour)
+      refresh-token:
+        expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000} # 7 days
+    # will uncomment when ready to use RSA keys
+    # rsa:
+    #   private-key: ${RSA_PRIVATE_KEY:classpath:certs/private.pem}
+    #   public-key: ${RSA_PUBLIC_KEY:classpath:certs/public.pem}
+  email:
+    from: ${EMAIL_FROM:noreply@sentinel.local}
+    verification-url: ${EMAIL_VERIFICATION_URL:http://localhost:3000/verify-email}
+    password-reset-url: ${EMAIL_PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+logging:
+  level:
+    org.springframework.security: DEBUG

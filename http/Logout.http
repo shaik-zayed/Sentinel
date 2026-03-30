@@ -1,0 +1,8 @@
+### Logout
+POST {{host}}/api/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+    "refreshToken" : "{{refreshToken}}"
+}

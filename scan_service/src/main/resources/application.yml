@@ -1,0 +1,62 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: scan-service
+  main:
+    banner-mode: off
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/scan_results
+    username: ${DB_USERNAME:zayed}
+    password: ${DB_PASSWORD:zayed}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+#    bootstrap-servers: localhost:9092
+    bootstrap-servers: 192.168.29.50:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+      properties:
+        spring.json.type.mapping: scanCommand:org.sentinel.scan_service.model.ScanCommandMessage
+        acks: all
+        retries: 3
+        enable.idempotence: true
+
+    consumer:
+      group-id: scan-service-results
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.type.mapping: scanResult:org.sentinel.scan_service.model.ScanResultMessage
+        spring.json.trusted.packages: "org.sentinel.scan_service.model"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        max.poll.records: 10
+
+topics:
+  output-name: scan_cmd
+  input-name: scan_result
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

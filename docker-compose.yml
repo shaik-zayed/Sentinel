@@ -1,0 +1,344 @@
+# =============================================================================
+# Sentinel – Full Stack docker-compose
+#
+# Infrastructure : mysql, kafka, kafka-ui, smtp4dev, minio
+# Spring services: eureka-server, api-gateway, auth-service,
+#                  scan-service, nmap-service, report-service
+#
+# Prerequisites
+#   • Docker 24+ and docker compose v2
+#   • Docker daemon TCP or socket access (required by nmap-service)
+#   • Copy .env.example → .env and fill in secrets before running
+#
+# Quick start
+#   docker compose up --build
+# =============================================================================
+
+#version: '3.8'
+
+# ---------------------------------------------------------------------------
+# Shared build template – avoids repeating the same build block six times
+# ---------------------------------------------------------------------------
+x-service-build: &service-build
+  context: .
+  dockerfile: Dockerfile
+
+# ---------------------------------------------------------------------------
+# Common environment shared by EVERY Spring Boot service
+# ---------------------------------------------------------------------------
+x-spring-common: &spring-common
+  environment:
+    EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+    JWT_SECRET_KEY: "${JWT_SECRET_KEY:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}"
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  networks:
+    - sentinel-net
+  restart: unless-stopped
+
+# ===========================================================================
+# SERVICES
+# ===========================================================================
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────────────────────────────────────
+
+  #  mysql:
+  #    image: mysql:8.0
+  #    container_name: sentinel-v2-mysql
+  #    environment:
+  #      #      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
+  #      #      MYSQL_USER:          "sentinel"
+  #      #      MYSQL_PASSWORD:      "${DB_PASSWORD:-sentinel}"
+  #      MYSQL_ROOT_PASSWORD: root
+  #      MYSQL_DATABASE: mydb
+  #      MYSQL_USER: sentinel
+  #      MYSQL_PASSWORD: sentinel
+  #      # Note: MYSQL_DATABASE creates one DB; our init.sql creates both.
+  #    volumes:
+  #      - mysql-data:/var/lib/mysql
+  #      # Init script runs once on first boot to create both schemas
+  #      - /d/Work/Sentinel_v2/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  ##      - ./mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  #    ports:
+  #      - "3306:3306"
+  #    networks:
+  #      - sentinel-net
+  #    healthcheck:
+  ##      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD:-sentinel}" ]
+  #      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=root" ]
+  #      interval: 10s
+  #      timeout: 5s
+  #      retries: 10
+  #      start_period: 30s
+  #    restart: unless-stopped
+  mysql:
+    build:
+      context: ./mysql-init
+      dockerfile: Dockerfile.mysql
+    container_name: sentinel-v2-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: sentinel
+      MYSQL_PASSWORD: sentinel
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - sentinel-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=root" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: sentinel-v2-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "INTERNAL://kafka:29092,CONTROLLER://kafka:29093,EXTERNAL://0.0.0.0:9092"
+      # EXTERNAL points to the Docker host so host-local tooling can reach it
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      CLUSTER_ID: "MkQrZGJiNTcwYTI4NDQ2ZTk5"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - sentinel-net
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: sentinel-v2-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8079:8080"    # Moved off 8080 – api-gateway uses 7777, but avoid surprise conflicts
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - sentinel-net
+    restart: unless-stopped
+
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    container_name: sentinel-v2-smtp4dev
+    restart: unless-stopped
+    ports:
+      - "5000:80"   # Web UI  → http://localhost:5000
+      - "2525:25"   # SMTP
+      - "143:143"   # IMAP
+    environment:
+      # No external IP needed inside Docker – services reach it via hostname
+      SMTP4DEV__BASE_URL: "http://smtp4dev:80"
+    volumes:
+      - smtp4dev-data:/smtp4dev
+    networks:
+      - sentinel-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: sentinel-v2-minio
+    ports:
+      - "9000:9000"   # S3-compatible API
+      - "9001:9001"   # Web console → http://localhost:9001
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY:-sentinel}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY:-sentinel123}"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - sentinel-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SPRING BOOT SERVICES  (startup order: eureka → gateway → everything else)
+  # ─────────────────────────────────────────────────────────────────────────
+
+  eureka-server:
+    <<: *spring-common
+    container_name: sentinel-v2-eureka
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider",
+              "http://localhost:8761/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  api-gateway:
+    <<: *spring-common
+    container_name: sentinel-v2-gateway
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: api-gateway
+    ports:
+      - "7777:7777"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}"
+
+  auth-service:
+    <<: *spring-common
+    container_name: sentinel-v2-auth
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: auth-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}"
+      # Database
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      #      SPRING_DATASOURCE_USERNAME: "sentinel"
+      #      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD:-sentinel}"
+      #      DB_USERNAME: "sentinel"
+      #      DB_PASSWORD: "${DB_PASSWORD:-sentinel}"
+
+      SPRING_DATASOURCE_USERNAME: sentinel
+      SPRING_DATASOURCE_PASSWORD: sentinel
+      DB_USERNAME: sentinel
+      DB_PASSWORD: sentinel
+      # Email – point at smtp4dev container
+      SMTP_HOST: "smtp4dev"
+      SMTP_PORT: "25"
+      # CORS – allow the gateway to call through
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:4200,http://localhost:7777"
+
+  scan-service:
+    <<: *spring-common
+    container_name: sentinel-v2-scan
+    build:
+      <<: *service-build
+      args:
+        # Module directory uses underscore – must match the folder name exactly
+        SERVICE_NAME: scan_service
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/scan_results?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      SPRING_DATASOURCE_USERNAME: "sentinel"
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD:-sentinel}"
+      DB_USERNAME: "sentinel"
+      DB_PASSWORD: "${DB_PASSWORD:-sentinel}"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+
+  nmap-service:
+    <<: *spring-common
+    container_name: sentinel-v2-nmap
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: nmap_service
+    ports:
+      - "8082:8082"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      # Override docker.host so nmap-service uses the mounted socket
+      # instead of the hardcoded tcp://localhost:2375
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+    volumes:
+      # Mount the Docker socket so nmap-service can launch nmap containers
+      # on the host Docker daemon (required for host-network nmap scans)
+      - /var/run/docker.sock:/var/run/docker.sock
+    # nmap containers need CAP_NET_RAW for SYN scans – give it to the
+    # nmap-service container as well so the Docker API calls succeed
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    user: root    # docker socket requires root or the docker group
+
+  report-service:
+    <<: *spring-common
+    container_name: sentinel-v2-report
+    build:
+      <<: *service-build
+      args:
+        SERVICE_NAME: report-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:-sentinel}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:-sentinel123}"
+      MINIO_BUCKET: "sentinel-reports"
+
+# ===========================================================================
+# VOLUMES
+# ===========================================================================
+volumes:
+  mysql-data:
+  minio-data:
+  smtp4dev-data:
+
+# ===========================================================================
+# NETWORKS
+# ===========================================================================
+networks:
+  sentinel-net:
+    driver: bridge

@@ -1,0 +1,15 @@
+### Login
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "jeffE@email.com",
+  "password": "Jeff@12345"
+}
+
+> {%
+    const data = response.body;
+    client.global.set("accessToken", data.accessToken);
+    client.global.set("refreshToken", data.refreshToken);
+    client.global.set("userId", data.userId);
+%}

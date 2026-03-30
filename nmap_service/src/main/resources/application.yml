@@ -1,0 +1,54 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: nmap-service
+  main:
+    banner-mode: off
+
+  kafka:
+    bootstrap-servers: 192.168.29.50:9092
+    #    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: nmap-service
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.type.mapping: scanCommand:org.sentinel.nmap_service.model.ScanCommandMessage
+        spring.json.trusted.packages: "org.sentinel.nmap_service.model"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+    listener:
+      concurrency: 3 # number of Kafka consumer threads (partition count = 3, so 1:1)
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: scanResult:org.sentinel.nmap_service.model.ScanResultMessage
+        acks: all
+        retries: 3
+        enable.idempotence: true
+
+topics:
+  input-name: scan_cmd
+  output-name: scan_result
+
+docker:
+  host: tcp://localhost:2375
+
+nmap:
+  image: "instrumentisto/nmap:latest"
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

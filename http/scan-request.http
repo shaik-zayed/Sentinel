@@ -1,0 +1,15 @@
+### ScanRequest - submit a scan
+POST {{host}}/api/v1/scan/submit
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+X-User-Id: {{userId}}
+
+{
+  "target": "192.168.29.1",
+  "scanMode": "DEEP",
+  "detectServiceVersion": true,
+  "detectOs": true,
+  "protocol": "TCP",
+  "portMode": "COMMON",
+  "portValue": "top-100"
+}

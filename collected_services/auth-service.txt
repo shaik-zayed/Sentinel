@@ -1,0 +1,3819 @@
+======================================== 
+SERVICE: auth-service 
+TOTAL FILES COLLECTED: 49 
+======================================== 
+ 
+**pom.xml** 
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.sentinel</groupId>
+        <artifactId>Sentinel</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>auth-service</artifactId>
+    <version>1.0.0</version>
+    <name>auth-service</name>
+    <description>Production-ready authentication service with JWT</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <springdoc.version>2.3.0</springdoc.version>
+        <spring-cloud.version>2025.1.0</spring-cloud.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Actuator for health checks and metrics -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer for Prometheus metrics -->
+<!--        <dependency>-->
+<!--            <groupId>io.micrometer</groupId>-->
+<!--            <artifactId>micrometer-registry-prometheus</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- Database -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flyway for database migrations -->
+<!--        <dependency>-->
+<!--            <groupId>org.flywaydb</groupId>-->
+<!--            <artifactId>flyway-core</artifactId>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.flywaydb</groupId>-->
+<!--            <artifactId>flyway-mysql</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- JWT Dependencies -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- API Documentation -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- JSpecify annotations for null safety -->
+<!--        <dependency>-->
+<!--            <groupId>org.jspecify</groupId>-->
+<!--            <artifactId>jspecify</artifactId>-->
+<!--            <version>0.3.0</version>-->
+<!--        </dependency>-->
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Development Tools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.h2database</groupId>-->
+<!--            <artifactId>h2</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+
+        <!-- Rest Assured for API testing -->
+<!--        <dependency>-->
+<!--            <groupId>io.rest-assured</groupId>-->
+<!--            <artifactId>rest-assured</artifactId>-->
+<!--            <version>6.0.0</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-autoconfigure</artifactId>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Flyway plugin for database migrations -->
+<!--            <plugin>-->
+<!--                <groupId>org.flywaydb</groupId>-->
+<!--                <artifactId>flyway-maven-plugin</artifactId>-->
+<!--            </plugin>-->
+
+            <!-- JaCoCo for code coverage -->
+<!--            <plugin>-->
+<!--                <groupId>org.jacoco</groupId>-->
+<!--                <artifactId>jacoco-maven-plugin</artifactId>-->
+<!--                <version>0.8.11</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>prepare-agent</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>report</id>-->
+<!--                        <phase>test</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>report</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+        </plugins>
+    </build>
+</project> 
+ 
+**application.yml** 
+server:
+  port: 8083
+
+spring:
+  application:
+    name: auth-service
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:mysql://localhost:3306/mydb
+    username: ${DB_USERNAME:zayed}
+    password: ${DB_PASSWORD:zayed}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+#    host: ${SMTP_HOST:localhost}
+#    port: ${SMTP_PORT:2525}
+    host: ${SMTP_HOST:192.168.29.50}
+    port: ${SMTP_PORT:2525}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            required: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+        debug: true
+
+
+application:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      access-token:
+        expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000} # 15 minutes (reduced to 15 minutes from 1 hour)
+      refresh-token:
+        expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000} # 7 days
+    # will uncomment when ready to use RSA keys
+    # rsa:
+    #   private-key: ${RSA_PRIVATE_KEY:classpath:certs/private.pem}
+    #   public-key: ${RSA_PUBLIC_KEY:classpath:certs/public.pem}
+  email:
+    from: ${EMAIL_FROM:noreply@sentinel.local}
+    verification-url: ${EMAIL_VERIFICATION_URL:http://localhost:3000/verify-email}
+    password-reset-url: ${EMAIL_PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+ 
+ 
+**org\sentinel\authservice\AuthServiceApplication.java** 
+package org.sentinel.authservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+
+@SpringBootApplication
+@ConfigurationPropertiesScan
+public class AuthServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AuthServiceApplication.class, args);
+    }
+} 
+ 
+**org\sentinel\authservice\config\AsyncConfig.java** 
+package org.sentinel.authservice.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.Executor;
+
+@Configuration
+@EnableAsync
+@EnableScheduling
+public class AsyncConfig {
+
+    @Bean(name = "taskExecutor")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("async-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
+        executor.initialize();
+        return executor;
+    }
+} 
+ 
+**org\sentinel\authservice\config\OpenApiConfig.java** 
+package org.sentinel.authservice.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Value("${application.openapi.dev-url:http://localhost:8083}")
+    private String devUrl;
+
+    @Value("${application.openapi.prod-url:https://api.example.com}")
+    private String prodUrl;
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        Server devServer = new Server();
+        devServer.setUrl(devUrl);
+        devServer.setDescription("Development Server");
+
+        Server prodServer = new Server();
+        prodServer.setUrl(prodUrl);
+        prodServer.setDescription("Production Server");
+
+        Contact contact = new Contact();
+        contact.setEmail("support@example.com");
+        contact.setName("Support Team");
+        contact.setUrl("https://www.example.com");
+
+        License license = new License()
+                .name("MIT License")
+                .url("https://choosealicense.com/licenses/mit/");
+
+        Info info = new Info()
+                .title("Authentication Service API")
+                .version("1.0.0")
+                .contact(contact)
+                .description("Production-ready authentication service with JWT, email verification, and password reset")
+                .termsOfService("https://www.example.com/terms")
+                .license(license);
+
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .in(SecurityScheme.In.HEADER)
+                .name("Authorization");
+
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList("bearerAuth");
+
+        return new OpenAPI()
+                .info(info)
+                .servers(List.of(devServer, prodServer))
+                .addSecurityItem(securityRequirement)
+                .schemaRequirement("bearerAuth", securityScheme);
+    }
+} 
+ 
+**org\sentinel\authservice\config\RsaKeyProperties.java** 
+package org.sentinel.authservice.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+
+@ConfigurationProperties(prefix = "application.security.rsa")
+public record RsaKeyProperties(
+        RSAPublicKey publicKey,
+        RSAPrivateKey privateKey
+) {
+} 
+ 
+**org\sentinel\authservice\config\SecurityConfig.java** 
+package org.sentinel.authservice.config;
+
+import lombok.RequiredArgsConstructor;
+import org.sentinel.authservice.filter.JwtAuthenticationFilter;
+import org.sentinel.authservice.filter.RateLimitFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/verify-email",
+            "/api/v1/auth/resend-verification",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            "/actuator/health",
+            "/actuator/info",
+            "/actuator/prometheus",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-ui.html"
+    };
+
+    private static final String[] ADMIN_ENDPOINTS = {
+            "/api/v1/admin/**",
+            "/api/v1/users/*/unlock",
+    };
+
+    @Value("${application.cors.allowed-origins}")
+    private String[] allowedOrigins;
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
+    private final UserDetailsService userDetailsService;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                        .requestMatchers("/api/v1/users/getAllUsers").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "USER")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+
+                            String message = "Authentication required";
+                            if (request.getAttribute("expired") != null) {
+                                message = "Token has expired";
+                            } else if (request.getAttribute("invalid") != null) {
+                                message = "Invalid authentication token";
+                            }
+
+                            response.getWriter().write(String.format(
+                                    "{\"error\":\"unauthorized\",\"message\":\"%s\",\"timestamp\":\"%s\"}",
+                                    message,
+                                    java.time.Instant.now()
+                            ));
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(String.format(
+                                    "{\"error\":\"forbidden\",\"message\":\"Access denied\",\"timestamp\":\"%s\"}",
+                                    java.time.Instant.now()
+                            ));
+                        })
+                )
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; frame-ancestors 'none';"))
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                )
+                .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
+        configuration.setExposedHeaders(List.of("X-Total-Count", "X-Page-Number", "Authorization"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(86400L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+} 
+ 
+**org\sentinel\authservice\controller\AuthController.java** 
+package org.sentinel.authservice.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.dto.*;
+import org.sentinel.authservice.service.AuthService;
+import org.sentinel.authservice.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "Authentication management endpoints")
+public class AuthController {
+
+    private final AuthService authService;
+    private final UserService userService;
+
+    @PostMapping("/register")
+    @Operation(summary = "Register a new user")
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        UserResponseDto response = authService.registerUser(request, httpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Authenticate user and receive tokens")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        AuthResponse response = authService.authenticateUser(request, httpRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token using refresh token", description = "Rotates the refresh token and provides a new access token. " + "Old refresh token is automatically revoked.")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String authHeader, HttpServletRequest httpRequest) {
+
+        try {
+            String refreshToken = extractTokenFromHeader(authHeader);
+            AuthResponse response = authService.refreshAccessToken(refreshToken, httpRequest);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Token refresh failed from IP {}: {}",
+                    getClientIP(httpRequest), e.getMessage());
+            throw e;
+        }
+    }
+
+    @GetMapping("/validate")
+    @Operation(summary = "Validate JWT token")
+    public ResponseEntity<Map<String, String>> validateToken(@RequestHeader("Authorization") String authHeader) {
+
+        String token = extractTokenFromHeader(authHeader);
+        authService.validateToken(token);
+        return ResponseEntity.ok(Map.of(
+                "status", "valid",
+                "message", "Token is valid"
+        ));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout and invalidate tokens", description = "Blacklists the access token and revokes the refresh token")
+    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader, @RequestBody LogoutRequest logoutRequest, HttpServletRequest httpRequest) {
+
+        try {
+            String accessToken = extractTokenFromHeader(authHeader);
+            authService.logout(accessToken, logoutRequest.getRefreshToken(), httpRequest);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Logged out successfully",
+                    "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            log.error("Logout failed: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Logout from all devices
+     */
+    @PostMapping("/logout-all-devices")
+    @Operation(summary = "Logout from all devices", description = "Revokes all refresh tokens for the user. " + "The user will need to login again on all devices.")
+    public ResponseEntity<Map<String, String>> logoutAllDevices(@RequestHeader("Authorization") String authHeader, HttpServletRequest httpRequest) {
+
+        try {
+            String accessToken = extractTokenFromHeader(authHeader);
+            authService.logoutAllDevices(accessToken, httpRequest);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Logged out from all devices successfully. Please login again.",
+                    "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            log.error("Logout all devices failed: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(summary = "Verify user email address")
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody EmailVerificationDto dto) {
+
+        userService.verifyEmail(dto.getToken());
+        return ResponseEntity.ok(Map.of(
+                "message", "Email verified successfully"
+        ));
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend email verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestParam String email) {
+
+        userService.resendVerificationEmail(email);
+        return ResponseEntity.ok(Map.of(
+                "message", "Verification email sent"
+        ));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Initiate password reset")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody PasswordResetRequestDto dto) {
+
+        userService.initiatePasswordReset(dto.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message", "If the email exists, a password reset link has been sent"
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using token")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody PasswordResetConfirmDto dto) {
+
+        userService.resetPassword(dto.getToken(), dto.getNewPassword());
+        return ResponseEntity.ok(Map.of(
+                "message", "Password reset successful. Please login with your new password."
+        ));
+    }
+
+    /**
+     * ✅ IMPROVED: Extract token with better error handling
+     */
+    private String extractTokenFromHeader(String authHeader) {
+        if (authHeader == null || authHeader.isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid authorization header format. Expected 'Bearer <token>'");
+        }
+
+        String token = authHeader.substring(7);
+        if (token.isBlank()) {
+            throw new IllegalArgumentException("Token is required in authorization header");
+        }
+
+        return token;
+    }
+
+    /**
+     * Helper method for consistent IP extraction
+     */
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null || xfHeader.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
+    }
+} 
+ 
+**org\sentinel\authservice\controller\UserController.java** 
+package org.sentinel.authservice.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.sentinel.authservice.dto.ChangePasswordDto;
+import org.sentinel.authservice.dto.PageResponse;
+import org.sentinel.authservice.dto.UserResponseDto;
+import org.sentinel.authservice.model.User;
+import org.sentinel.authservice.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
+@Tag(name = "User Management", description = "User management endpoints")
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current user profile")
+    public ResponseEntity<UserResponseDto> getCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userService.findByEmail(email);
+
+        UserResponseDto dto = UserResponseDto.builder()
+                .userId(user.getUserId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .enabled(user.getEnabled())
+                .locked(user.getLocked())
+                .createdAt(user.getCreatedAt())
+                .lastSuccessfulLoginAt(user.getLastSuccessfulLoginAt())
+                .build();
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/me/change-password")
+    @Operation(summary = "Change current user password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody ChangePasswordDto dto,
+            Authentication authentication) {
+
+        String email = authentication.getName();
+        User user = userService.findByEmail(email);
+        userService.changePassword(user.getUserId(), dto);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Password changed successfully"
+        ));
+    }
+
+    @GetMapping("/getAllUsers")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all users (paginated, admin only)")
+    public ResponseEntity<PageResponse<UserResponseDto>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("ASC")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<UserResponseDto> userPage = userService.findAllUsers(pageable);
+
+        PageResponse<UserResponseDto> response = PageResponse.<UserResponseDto>builder()
+                .content(userPage.getContent())
+                .pageNumber(userPage.getNumber())
+                .pageSize(userPage.getSize())
+                .totalElements(userPage.getTotalElements())
+                .totalPages(userPage.getTotalPages())
+                .last(userPage.isLast())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get user by ID (admin only)")
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id) {
+        User user = userService.findById(id);
+
+        UserResponseDto dto = UserResponseDto.builder()
+                .userId(user.getUserId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .enabled(user.getEnabled())
+                .locked(user.getLocked())
+                .createdAt(user.getCreatedAt())
+                .lastSuccessfulLoginAt(user.getLastSuccessfulLoginAt())
+                .build();
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete user (soft delete, admin only)")
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable UUID id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(Map.of(
+                "message", "User deleted successfully"
+        ));
+    }
+
+    @PostMapping("/{id}/unlock")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Unlock user account (admin only)")
+    public ResponseEntity<Map<String, String>> unlockUser(@PathVariable UUID id) {
+        userService.unlockUserAccount(id);
+        return ResponseEntity.ok(Map.of(
+                "message", "User account unlocked successfully"
+        ));
+    }
+} 
+ 
+**org\sentinel\authservice\dto\AuthResponse.java** 
+package org.sentinel.authservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class AuthResponse {
+    private String accessToken;
+    private String refreshToken;
+    private UUID userId;
+    private String email;
+    private long expiresIn;
+    private String tokenType = "Bearer";
+} 
+ 
+**org\sentinel\authservice\dto\ChangePasswordDto.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class ChangePasswordDto {
+    @NotBlank(message = "Current password is required")
+    private String currentPassword;
+
+    @NotBlank(message = "New password is required")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$",
+            message = "Password must contain uppercase, lowercase, digit, and special character")
+    @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
+    private String newPassword;
+} 
+ 
+**org\sentinel\authservice\dto\EmailVerificationDto.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class EmailVerificationDto {
+    @NotBlank(message = "Token is required")
+    private String token;
+} 
+ 
+**org\sentinel\authservice\dto\LoginRequest.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class LoginRequest {
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    private String email;
+
+    @NotBlank(message = "Password is required")
+    private String password;
+} 
+ 
+**org\sentinel\authservice\dto\LogoutRequest.java** 
+package org.sentinel.authservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class LogoutRequest {
+    private String refreshToken;
+} 
+ 
+**org\sentinel\authservice\dto\PageResponse.java** 
+package org.sentinel.authservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class PageResponse<T> {
+    private List<T> content;
+    private int pageNumber;
+    private int pageSize;
+    private long totalElements;
+    private int totalPages;
+    private boolean last;
+} 
+ 
+**org\sentinel\authservice\dto\PasswordResetConfirmDto.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class PasswordResetConfirmDto {
+    @NotBlank(message = "Token is required")
+    private String token;
+
+    @NotBlank(message = "Password is required")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$",
+            message = "Password must contain uppercase, lowercase, digit, and special character")
+    @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
+    private String newPassword;
+} 
+ 
+**org\sentinel\authservice\dto\PasswordResetRequestDto.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class PasswordResetRequestDto {
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    private String email;
+} 
+ 
+**org\sentinel\authservice\dto\RefreshTokenRequest.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshTokenRequest {
+
+    @NotBlank(message = "Refresh token is required")
+    private String refreshToken;
+} 
+ 
+**org\sentinel\authservice\dto\RegisterRequest.java** 
+package org.sentinel.authservice.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class RegisterRequest {
+    @NotBlank(message = "First name is required")
+    @Size(max = 50, message = "First name must not exceed 50 characters")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(max = 50, message = "Last name must not exceed 50 characters")
+    private String lastName;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    @Size(max = 50, message = "Email must not exceed 50 characters")
+    private String email;
+
+    @NotBlank(message = "Password is required")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$",
+            message = "Password must contain uppercase, lowercase, digit, and special character")
+    @Size(min = 8, max = 50, message = "Password must be between 8 and 50 characters")
+    private String password;
+} 
+ 
+**org\sentinel\authservice\dto\UserResponseDto.java** 
+package org.sentinel.authservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class UserResponseDto {
+    private UUID userId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String role;
+    private Boolean enabled;
+    private Boolean locked;
+    private LocalDateTime createdAt;
+    private LocalDateTime lastSuccessfulLoginAt;
+} 
+ 
+**org\sentinel\authservice\exceptions\AccountDisabledException.java** 
+package org.sentinel.authservice.exceptions;
+
+public class AccountDisabledException extends RuntimeException {
+    public AccountDisabledException(String message) {
+        super(message);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\EmailAlreadyVerifiedException.java** 
+package org.sentinel.authservice.exceptions;
+
+public class EmailAlreadyVerifiedException extends RuntimeException {
+    public EmailAlreadyVerifiedException(String message) {
+        super(message);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\ErrorResponse.java** 
+package org.sentinel.authservice.exceptions;
+
+import lombok.Builder;
+
+import java.time.OffsetDateTime;
+
+@Builder
+public record ErrorResponse(
+        OffsetDateTime timeStamp,
+        int status,
+        String message,
+        String path) {
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\GlobalExceptionHandler.java** 
+package org.sentinel.authservice.exceptions;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.OffsetDateTime;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handlerUserAlreadyExist(UserAlreadyExistsException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Invalid credentials")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AccountDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleAccountDisabledException(AccountDisabledException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Authentication failed")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .message("Access denied")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwt(ExpiredJwtException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("JWT token has expired")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Invalid JWT token")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Invalid Token")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(EmailAlreadyVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyVerifiedException(EmailAlreadyVerifiedException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Email already verified")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timeStamp(OffsetDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message("An unexpected error occurred")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+} 
+ 
+**org\sentinel\authservice\exceptions\InvalidTokenException.java** 
+package org.sentinel.authservice.exceptions;
+
+public class InvalidTokenException extends RuntimeException {
+    public InvalidTokenException(String message) {
+        super(message);
+    }
+}
+
+ 
+ 
+**org\sentinel\authservice\exceptions\LogoutException.java** 
+package org.sentinel.authservice.exceptions;
+
+/**
+ * Thrown when a logout operation fails (e.g., token blacklisting error).
+ */
+public class LogoutException extends RuntimeException {
+    public LogoutException(String message) {
+        super(message);
+    }
+
+    public LogoutException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\TokenBlacklistException.java** 
+package org.sentinel.authservice.exceptions;
+
+/**
+ * Thrown when a token blacklisting operation fails.
+ */
+public class TokenBlacklistException extends RuntimeException {
+    public TokenBlacklistException(String message) {
+        super(message);
+    }
+
+    public TokenBlacklistException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\UserAlreadyExistsException.java** 
+package org.sentinel.authservice.exceptions;
+
+public class UserAlreadyExistsException extends RuntimeException {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\exceptions\UserNotFoundException.java** 
+package org.sentinel.authservice.exceptions;
+
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String message) {
+        super(message);
+    }
+}
+ 
+ 
+**org\sentinel\authservice\filter\JwtAuthenticationFilter.java** 
+package org.sentinel.authservice.filter;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.sentinel.authservice.service.TokenBlacklistService;
+import org.sentinel.authservice.util.JwtUtil;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
+
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        // Skip JWT authentication for public endpoints
+        if (isPublicEndpoint(request.getServletPath())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            final String jwt = authHeader.substring(7);
+
+            // Check if token is blacklisted
+            String jti = jwtUtil.extractClaim(jwt, Claims::getId);
+            if (tokenBlacklistService.isTokenBlacklisted(jti)) {
+                log.warn("Attempt to use blacklisted token - JTI: {}", jti);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Please login to access.\"}");
+                return;
+            }
+
+            final String userEmail = jwtUtil.extractUsername(jwt);
+
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                authenticateUser(request, jwt, userEmail);
+            }
+
+        } catch (ExpiredJwtException e) {
+            log.debug("JWT token expired: {}", e.getMessage());
+            request.setAttribute("expired", true);
+            request.setAttribute("errorMessage", "Token has expired");
+
+        } catch (JwtException e) {
+            log.error("JWT token validation error: {}", e.getMessage());
+            request.setAttribute("invalid", true);
+            request.setAttribute("errorMessage", "Invalid token");
+
+        } catch (UsernameNotFoundException e) {
+            log.error("User not found: {}", e.getMessage());
+            request.setAttribute("userNotFound", true);
+            request.setAttribute("errorMessage", "User not found");
+
+        } catch (Exception e) {
+            log.error("Authentication error: {}", e.getMessage(), e);
+            request.setAttribute("authError", true);
+            request.setAttribute("errorMessage", "Authentication failed");
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private void authenticateUser(HttpServletRequest request, String jwt, String userEmail) {
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+
+            if (jwtUtil.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                log.debug("User authenticated successfully: {}", userEmail);
+
+            } else {
+                log.warn("JWT token is invalid for user: {}", userEmail);
+                request.setAttribute("invalid", true);
+            }
+        } catch (Exception e) {
+            log.error("Error during user authentication: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        return path.contains("/api/v1/auth/register") ||
+                path.contains("/api/v1/auth/login") ||
+                path.contains("/api/v1/auth/verify-email") ||
+                path.contains("/api/v1/auth/forgot-password") ||
+                path.contains("/api/v1/auth/reset-password") ||
+                path.contains("/actuator/health") ||
+                path.contains("/actuator/info") ||
+                path.contains("/swagger-ui") ||
+                path.contains("/v3/api-docs");
+    }
+} 
+ 
+**org\sentinel\authservice\filter\RateLimitFilter.java** 
+package org.sentinel.authservice.filter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@Slf4j
+@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final int MAX_REQUESTS_PER_MINUTE = 10;
+    private static final int MAX_LOGIN_ATTEMPTS_PER_HOUR = 5;
+
+    private final Map<String, RateLimitInfo> requestCounts = new ConcurrentHashMap<>();
+    private final Map<String, RateLimitInfo> loginAttempts = new ConcurrentHashMap<>();
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String clientIP = getClientIP(request);
+        String path = request.getRequestURI();
+
+        // Apply stricter rate limiting to login endpoint
+        if (path.contains("/api/v1/auth/login")) {
+            if (isLoginRateLimitExceeded(clientIP)) {
+                log.warn("Login rate limit exceeded for IP: {}", clientIP);
+                sendRateLimitResponse(response, "Too many login attempts. Please try again later.");
+                return;
+            }
+        }
+
+        // General rate limiting for all endpoints
+        if (isGeneralRateLimitExceeded(clientIP)) {
+            log.warn("General rate limit exceeded for IP: {}", clientIP);
+            sendRateLimitResponse(response, "Too many requests. Please try again later.");
+            return;
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean isGeneralRateLimitExceeded(String clientIP) {
+        RateLimitInfo info = requestCounts.computeIfAbsent(
+                clientIP,
+                k -> new RateLimitInfo()
+        );
+
+        if (info.shouldReset(60)) { // 1 minute window
+            info.reset();
+        }
+
+        return info.increment() > MAX_REQUESTS_PER_MINUTE;
+    }
+
+    private boolean isLoginRateLimitExceeded(String clientIP) {
+        RateLimitInfo info = loginAttempts.computeIfAbsent(
+                clientIP,
+                k -> new RateLimitInfo()
+        );
+
+        if (info.shouldReset(3600)) { // 1 hour window
+            info.reset();
+        }
+
+        return info.increment() > MAX_LOGIN_ATTEMPTS_PER_HOUR;
+    }
+
+    private void sendRateLimitResponse(HttpServletResponse response, String message)
+            throws IOException {
+        response.setStatus(429); // Too Many Requests
+        response.setContentType("application/json");
+        response.getWriter().write(String.format(
+                "{\"error\":\"rate_limit_exceeded\",\"message\":\"%s\",\"timestamp\":\"%s\"}",
+                message,
+                Instant.now()
+        ));
+    }
+
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
+    }
+
+    private static class RateLimitInfo {
+        private final AtomicInteger count = new AtomicInteger(0);
+        private volatile long windowStart = System.currentTimeMillis();
+
+        public int increment() {
+            return count.incrementAndGet();
+        }
+
+        public boolean shouldReset(long windowSeconds) {
+            long elapsed = (System.currentTimeMillis() - windowStart) / 1000;
+            return elapsed > windowSeconds;
+        }
+
+        public void reset() {
+            count.set(0);
+            windowStart = System.currentTimeMillis();
+        }
+    }
+} 
+ 
+**org\sentinel\authservice\model\AuditLog.java** 
+package org.sentinel.authservice.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "audit_logs", indexes = {
+        @Index(name = "idx_user_id", columnList = "userId"),
+        @Index(name = "idx_action", columnList = "action"),
+        @Index(name = "idx_created_at", columnList = "createdAt")
+})
+public class AuditLog {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    private UUID userId;
+
+    @Column(nullable = false, length = 100)
+    private String action;
+
+    @Column(length = 500)
+    private String details;
+
+    @Column(length = 45)
+    private String ipAddress;
+
+    @Column(length = 500)
+    private String userAgent;
+
+    @Column(nullable = false)
+    private Boolean successful;
+
+    @Column(length = 500)
+    private String errorMessage;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+} 
+ 
+**org\sentinel\authservice\model\RefreshToken.java** 
+package org.sentinel.authservice.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "refresh_tokens")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RefreshToken {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "token_hash", unique = true, nullable = false, length = 64)
+    private String tokenHash;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "token_family_id", nullable = false)
+    private UUID tokenFamilyId;
+
+    @Column(name = "device_info")
+    private String deviceInfo;
+
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
+
+    @Column(name = "user_agent", columnDefinition = "TEXT")
+    private String userAgent;
+
+    @Column(name = "issued_at", nullable = false)
+    private Instant issuedAt;
+
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
+    @Column(name = "last_used_at")
+    private Instant lastUsedAt;
+
+    @Column(name = "revoked", nullable = false)
+    private boolean revoked = false;
+
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
+
+    @Column(name = "revocation_reason", length = 100)
+    private String revocationReason;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
+} 
+ 
+**org\sentinel\authservice\model\Role.java** 
+package org.sentinel.authservice.model;
+
+public enum Role {
+    USER,ADMIN
+}
+ 
+ 
+**org\sentinel\authservice\model\TokenBlacklist.java** 
+package org.sentinel.authservice.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "token_blacklist")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TokenBlacklist {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "token_jti", unique = true, nullable = false, length = 100)
+    private String tokenJti;
+
+    @Column(name = "user_id")
+    private UUID userId;
+
+    @Column(name = "blacklisted_at", nullable = false)
+    private Instant blacklistedAt;
+
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
+    @Column(name = "reason", length = 100)
+    private String reason;
+
+    @PrePersist
+    protected void onCreate() {
+        if (blacklistedAt == null) {
+            blacklistedAt = Instant.now();
+        }
+    }
+} 
+ 
+**org\sentinel\authservice\model\User.java** 
+package org.sentinel.authservice.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "users", indexes = {
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_created_at", columnList = "createdAt"),
+        @Index(name = "idx_deleted_at", columnList = "deletedAt")
+})
+@ToString(exclude = {"password"})
+@EqualsAndHashCode(of = {"userId"})
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID userId;
+
+    @Column(nullable = false, length = 100)
+    private String firstName;
+
+    @Column(nullable = false, length = 100)
+    private String lastName;
+
+    @Column(nullable = false, unique = true, length = 255)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private Role role = Role.USER;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean enabled = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean locked = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    private LocalDateTime lastFailedLoginAt;
+    private LocalDateTime lastSuccessfulLoginAt;
+
+    @Column(length = 64)
+    private String emailVerificationToken;
+
+    private LocalDateTime emailVerificationTokenExpiresAt;
+    private LocalDateTime emailVerifiedAt;
+
+    @Column(length = 64)
+    private String passwordResetToken;
+
+    private LocalDateTime passwordResetTokenExpiresAt;
+
+    private LocalDateTime deletedAt;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Version
+    private Long version;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isActive() {
+        return deletedAt == null;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+        this.enabled = false;
+        this.locked = true;
+    }
+
+    public void incrementFailedLoginAttempts() {
+        this.failedLoginAttempts++;
+        this.lastFailedLoginAt = LocalDateTime.now();
+        if (this.failedLoginAttempts >= 5) {
+            this.locked = true;
+        }
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lastFailedLoginAt = null;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public void markEmailAsVerified() {
+        this.emailVerifiedAt = LocalDateTime.now();
+        this.emailVerificationToken = null;
+        this.emailVerificationTokenExpiresAt = null;
+        this.enabled = true;
+    }
+} 
+ 
+**org\sentinel\authservice\repository\AuditLogRepository.java** 
+package org.sentinel.authservice.repository;
+
+import org.sentinel.authservice.model.AuditLog;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Repository
+public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
+    Page<AuditLog> findByUserId(UUID userId, Pageable pageable);
+
+    Page<AuditLog> findByAction(String action, Pageable pageable);
+
+    Page<AuditLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    long countByUserIdAndActionAndSuccessfulAndCreatedAtAfter(
+            UUID userId, String action, Boolean successful, LocalDateTime after);
+} 
+ 
+**org\sentinel\authservice\repository\RefreshTokenRepository.java** 
+package org.sentinel.authservice.repository;
+
+import org.sentinel.authservice.model.RefreshToken;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
+
+    List<RefreshToken> findByUserUserIdAndRevokedFalseOrderByIssuedAtDesc(UUID userId);//Finding by User's userid(id)
+
+    List<RefreshToken> findByTokenFamilyId(UUID tokenFamilyId);
+
+    @Query("SELECT COUNT(rt) FROM RefreshToken rt WHERE rt.user.userId = :userId AND rt.revoked = false")
+    long countActiveByUserId(@Param("userId") UUID userId);
+
+    @Modifying
+    @Query("UPDATE RefreshToken rt SET rt.revoked = true, rt.revokedAt = :now, rt.revocationReason = :reason WHERE rt.user.userId = :userId AND rt.revoked = false")
+    int revokeAllByUserId(@Param("userId") UUID userId,
+                          @Param("now") Instant now,
+                          @Param("reason") String reason);
+
+    @Modifying
+    @Query("UPDATE RefreshToken rt SET rt.revoked = true, rt.revokedAt = :now, rt.revocationReason = :reason WHERE rt.tokenFamilyId = :familyId AND rt.revoked = false")
+    int revokeByFamilyId(@Param("familyId") UUID familyId,
+                         @Param("now") Instant now,
+                         @Param("reason") String reason);
+
+    @Modifying
+    @Query("DELETE FROM RefreshToken rt WHERE rt.expiresAt < :now OR (rt.revoked = true AND rt.revokedAt < :cutoffDate)")
+    int deleteExpiredAndOldRevoked(@Param("now") Instant now,
+                                   @Param("cutoffDate") Instant cutoffDate);
+} 
+ 
+**org\sentinel\authservice\repository\TokenBlacklistRepository.java** 
+package org.sentinel.authservice.repository;
+
+import org.sentinel.authservice.model.TokenBlacklist;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Repository for managing blacklisted access tokens.
+ * <p>
+ * Note: This is for ACCESS TOKENS only (short-lived, stateless).
+ * Refresh tokens should be managed via RefreshTokenRepository (long-lived, stateful).
+ * <p>
+ */
+@Repository
+public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, UUID> {
+
+    /**
+     * Check if a token JTI is blacklisted
+     */
+    boolean existsByTokenJti(String tokenJti);
+
+    /**
+     * Delete expired blacklist entries
+     */
+    @Modifying
+    @Query("DELETE FROM TokenBlacklist t WHERE t.expiresAt < :now")
+    int deleteExpiredTokens(@Param("now") Instant now);
+
+    /**
+     * Count blacklisted tokens for a specific user
+     * (Useful for monitoring)
+     */
+    @Query("SELECT COUNT(t) FROM TokenBlacklist t WHERE t.userId = :userId")
+    long countByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Find all blacklisted tokens for a user
+     * (Useful for admin dashboard or debugging)
+     */
+    @Query("SELECT t FROM TokenBlacklist t WHERE t.userId = :userId ORDER BY t.blacklistedAt DESC")
+    List<TokenBlacklist> findByUserId(@Param("userId") UUID userId);
+} 
+ 
+**org\sentinel\authservice\repository\UserRepository.java** 
+package org.sentinel.authservice.repository;
+
+import org.sentinel.authservice.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+    Optional<User> findByEmailVerificationToken(String token);
+
+    Optional<User> findByPasswordResetToken(String token);
+
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    Page<User> findAllActiveUsers(Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    List<User> findAllActiveUsers();
+
+    @Query("SELECT u FROM User u WHERE u.locked = true AND u.lastFailedLoginAt < :before")
+    List<User> findLockedUsersOlderThan(LocalDateTime before);
+}
+ 
+ 
+**org\sentinel\authservice\service\AuditService.java** 
+package org.sentinel.authservice.service;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.model.AuditLog;
+import org.sentinel.authservice.repository.AuditLogRepository;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AuditService {
+
+    private final AuditLogRepository auditLogRepository;
+
+    @Async
+    public void logAuthenticationAttempt(UUID userId, String action, boolean successful,
+                                         String ipAddress, String userAgent, String errorMessage) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                    .userId(userId)
+                    .action(action)
+                    .successful(successful)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .errorMessage(errorMessage)
+                    .build();
+
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            log.error("Failed to save audit log: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    public void logAction(UUID userId, String action, String details,
+                          HttpServletRequest request) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                    .userId(userId)
+                    .action(action)
+                    .details(details)
+                    .successful(true)
+                    .ipAddress(getClientIP(request))
+                    .userAgent(request.getHeader("User-Agent"))
+                    .build();
+
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            log.error("Failed to save audit log: {}", e.getMessage());
+        }
+    }
+
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0];
+    }
+} 
+ 
+**org\sentinel\authservice\service\AuthService.java** 
+package org.sentinel.authservice.service;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.dto.AuthResponse;
+import org.sentinel.authservice.dto.LoginRequest;
+import org.sentinel.authservice.dto.RegisterRequest;
+import org.sentinel.authservice.dto.UserResponseDto;
+import org.sentinel.authservice.exceptions.AccountDisabledException;
+import org.sentinel.authservice.exceptions.InvalidTokenException;
+import org.sentinel.authservice.exceptions.LogoutException;
+import org.sentinel.authservice.model.RefreshToken;
+import org.sentinel.authservice.model.User;
+import org.sentinel.authservice.util.JwtUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final JwtUtil jwtUtil;
+    private final UserService userService;
+    private final AuditService auditService;
+    private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final RefreshTokenService refreshTokenService;
+
+    @Transactional
+    public UserResponseDto registerUser(RegisterRequest request, HttpServletRequest httpRequest) {
+        log.info("Processing registration request for email: {}", maskEmail(request.getEmail()));
+
+        User user = userService.registerUser(request);
+
+        auditService.logAction(
+                user.getUserId(),
+                "USER_REGISTRATION",
+                "New user registered",
+                httpRequest
+        );
+
+        return UserResponseDto.builder()
+                .userId(user.getUserId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .enabled(user.getEnabled())
+                .locked(user.getLocked())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    @Transactional
+    public AuthResponse authenticateUser(LoginRequest request, HttpServletRequest httpRequest) {
+        String email = request.getEmail();
+        String ipAddress = getClientIP(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+
+        log.info("Authentication attempt for email: {} from IP: {}", maskEmail(email), ipAddress);
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.getPassword())
+            );
+
+            UserDetails principal = (UserDetails) authentication.getPrincipal();
+            Objects.requireNonNull(principal, "Authentication principal must not be null");
+            User user = userService.findByEmail(principal.getUsername());
+
+            // Reset failed login attempts on successful login
+            if (user.getFailedLoginAttempts() > 0) {
+                userService.resetFailedLoginAttempts(user);
+            }
+
+            // Log successful authentication
+            auditService.logAuthenticationAttempt(
+                    user.getUserId(),
+                    "LOGIN_SUCCESS",
+                    true,
+                    ipAddress,
+                    userAgent,
+                    null
+            );
+
+            log.info("User authenticated successfully: {}", user.getUserId());
+
+            // Pass HttpServletRequest for proper token creation
+            return generateAuthResponse(user, httpRequest);
+
+        } catch (BadCredentialsException ex) {
+            log.warn("Invalid credentials for email: {} from IP: {}", maskEmail(email), ipAddress);
+            handleFailedLogin(email, ipAddress, userAgent, "Invalid credentials");
+            throw new BadCredentialsException("Invalid email or password");
+
+        } catch (DisabledException ex) {
+            log.warn("Disabled account login attempt: {} from IP: {}", maskEmail(email), ipAddress);
+
+            try {
+                User user = userService.findByEmail(email);
+                auditService.logAuthenticationAttempt(
+                        user.getUserId(),
+                        "LOGIN_FAILED_DISABLED",
+                        false,
+                        ipAddress,
+                        userAgent,
+                        "Account not activated"
+                );
+            } catch (Exception ignored) {
+                // User might not exist
+            }
+
+            throw new AccountDisabledException("Account is not activated. Please verify your email.");
+
+        } catch (LockedException ex) {
+            log.warn("Locked account login attempt: {} from IP: {}", maskEmail(email), ipAddress);
+
+            try {
+                User user = userService.findByEmail(email);
+                auditService.logAuthenticationAttempt(
+                        user.getUserId(),
+                        "LOGIN_FAILED_LOCKED",
+                        false,
+                        ipAddress,
+                        userAgent,
+                        "Account locked"
+                );
+            } catch (Exception ignored) {
+                // User might not exist
+            }
+
+            throw new LockedException("Account is locked due to multiple failed login attempts. " +
+                    "Your account will be automatically unlocked in 30 minutes or contact support.");
+        }
+    }
+
+    private void handleFailedLogin(String email, String ipAddress, String userAgent, String reason) {
+        try {
+            User user = userService.findByEmail(email);
+            userService.incrementFailedLoginAttempts(user);
+
+            auditService.logAuthenticationAttempt(
+                    user.getUserId(),
+                    "LOGIN_FAILED",
+                    false,
+                    ipAddress,
+                    userAgent,
+                    reason
+            );
+
+        } catch (Exception e) {
+            // User might not exist - don't reveal this information
+            log.debug("Failed login for non-existent user from IP: {}", ipAddress);
+            auditService.logAuthenticationAttempt(
+                    null,
+                    "LOGIN_FAILED",
+                    false,
+                    ipAddress,
+                    userAgent,
+                    "User not found"
+            );
+        }
+    }
+
+    /**
+     * ✅ COMPLETELY REWRITTEN - Now uses database-backed refresh tokens with rotation
+     */
+    @Transactional
+    public AuthResponse refreshAccessToken(String refreshTokenString, HttpServletRequest httpRequest) {
+        log.info("Processing token refresh request from IP: {}", getClientIP(httpRequest));
+
+        if (refreshTokenString == null || refreshTokenString.isBlank()) {
+            throw new InvalidTokenException("Refresh token is required");
+        }
+
+        // ✅ Step 1: Validate token type (JWT structure)
+        if (!jwtUtil.isRefreshToken(refreshTokenString)) {
+            log.warn("Attempted to use access token for refresh from IP: {}", getClientIP(httpRequest));
+            throw new InvalidTokenException("Invalid token type. Refresh token required.");
+        }
+
+        try {
+            // ✅ Step 2: Validate against database and check for security issues
+            RefreshToken oldToken = refreshTokenService.validateAndGetRefreshToken(refreshTokenString);
+            User user = oldToken.getUser();
+
+            // ✅ Step 3: Additional security checks on user account
+            if (!user.isActive()) {
+                log.warn("Refresh attempt for inactive user: {}", user.getUserId());
+                throw new InvalidTokenException("Account is no longer active");
+            }
+
+            if (!user.getEnabled()) {
+                log.warn("Refresh attempt for disabled user: {}", user.getUserId());
+                throw new InvalidTokenException("Account is not enabled");
+            }
+
+            if (user.getLocked()) {
+                log.warn("Refresh attempt for locked user: {}", user.getUserId());
+                throw new InvalidTokenException("Account is locked");
+            }
+
+            // ✅ Step 4: Rotate the refresh token (revoke old, create new in same family)
+            String newRefreshTokenString = refreshTokenService.rotateRefreshToken(oldToken, httpRequest);
+
+            // ✅ Step 5: Generate new access token
+            UserDetails userDetails = new CustomUserDetails(user);
+            String newAccessToken = jwtUtil.generateAccessToken(userDetails);
+
+            // ✅ Step 6: Log the refresh operation
+            auditService.logAction(
+                    user.getUserId(),
+                    "TOKEN_REFRESH",
+                    String.format("Token refreshed from IP: %s, Family: %s",
+                            getClientIP(httpRequest),
+                            oldToken.getTokenFamilyId()),
+                    httpRequest
+            );
+
+            log.info("Token refreshed successfully for user: {}, family: {}",
+                    user.getUserId(), oldToken.getTokenFamilyId());
+
+            // ✅ Step 7: Return new token pair
+            return AuthResponse.builder()
+                    .accessToken(newAccessToken)
+                    .refreshToken(newRefreshTokenString)
+                    .userId(user.getUserId())
+                    .email(user.getEmail())
+                    .expiresIn(jwtUtil.getJwtExpiration())
+                    .tokenType("Bearer")
+                    .build();
+
+        } catch (InvalidTokenException e) {
+            // ✅ Specific token validation errors - already logged in RefreshTokenService
+            throw e;
+        } catch (SecurityException e) {
+            // ✅ Token reuse detected - entire family already revoked in RefreshTokenService
+            log.error("SECURITY ALERT: Token reuse detected from IP: {}", getClientIP(httpRequest));
+            throw new InvalidTokenException("Security violation detected. All related sessions have been terminated.");
+        } catch (Exception ex) {
+            log.error("Error refreshing token from IP: {}: {}", getClientIP(httpRequest), ex.getMessage());
+            throw new InvalidTokenException("Token refresh failed: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Creates database-backed refresh tokens
+     */
+    private AuthResponse generateAuthResponse(User user, HttpServletRequest httpRequest) {
+        UserDetails customUserDetails = new CustomUserDetails(user);
+
+        // Generate access token (JWT only, no database storage needed)
+        String accessToken = jwtUtil.generateAccessToken(customUserDetails);
+
+        // Creates refresh token with database backing
+        String refreshToken = refreshTokenService.createRefreshToken(user, httpRequest);
+
+        log.debug("Generated token pair for user: {}", user.getUserId());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .expiresIn(jwtUtil.getJwtExpiration())
+                .tokenType("Bearer")
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public void validateToken(String token) {
+        // Check if token is blacklisted (for access tokens)
+        if (tokenBlacklistService.isTokenBlacklistedByToken(token)) {
+            throw new InvalidTokenException("Token has been revoked");
+        }
+
+        try {
+            String userEmail = jwtUtil.extractUsername(token);
+            User user = userService.findByEmail(userEmail);
+
+            if (!user.isActive()) {
+                throw new InvalidTokenException("User account is not active");
+            }
+
+            if (!user.getEnabled()) {
+                throw new InvalidTokenException("User account is not enabled");
+            }
+
+            UserDetails userDetails = new CustomUserDetails(user);
+
+            if (!jwtUtil.isTokenValid(token, userDetails)) {
+                throw new InvalidTokenException("Invalid token");
+            }
+
+            log.debug("Token validated for user: {}", user.getUserId());
+
+        } catch (InvalidTokenException e) {
+            throw e;
+        } catch (Exception ex) {
+            log.error("Token validation failed: {}", ex.getMessage());
+            throw new InvalidTokenException("Token validation failed: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Revokes database refresh tokens
+     */
+    @Transactional
+    public void logout(String accessToken, String refreshToken, HttpServletRequest httpRequest) {
+        try {
+            String userEmail = jwtUtil.extractUsername(accessToken);
+            User user = userService.findByEmail(userEmail);
+
+            // Blacklist the access token (prevents use until natural expiration)
+            tokenBlacklistService.blacklistToken(accessToken, user.getUserId(), "User logout");
+
+            // Revoke the refresh token in the database (permanent invalidation)
+            try {
+                refreshTokenService.revokeToken(refreshToken, "User logout");
+            } catch (InvalidTokenException e) {
+                // Token might already be revoked or not found - log but don't fail logout
+                log.warn("Could not revoke refresh token during logout for user {}: {}",
+                        user.getUserId(), e.getMessage());
+            }
+
+            auditService.logAction(
+                    user.getUserId(),
+                    "LOGOUT",
+                    String.format("User logged out from IP: %s", getClientIP(httpRequest)),
+                    httpRequest
+            );
+
+            log.info("User logged out successfully: {}", user.getUserId());
+
+        } catch (Exception e) {
+            log.error("Error during logout: {}", e.getMessage());
+            throw new RuntimeException("Logout failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Logout from all devices
+     */
+    @Transactional
+    public void logoutAllDevices(String accessToken, HttpServletRequest httpRequest) {
+        try {
+            String userEmail = jwtUtil.extractUsername(accessToken);
+            User user = userService.findByEmail(userEmail);
+
+            // Blacklist current access token
+            tokenBlacklistService.blacklistToken(accessToken, user.getUserId(), "Logout all devices");
+
+            // Revoke ALL refresh tokens for this user
+            refreshTokenService.revokeAllUserTokens(user.getUserId(), "User requested logout from all devices");
+
+            auditService.logAction(
+                    user.getUserId(),
+                    "LOGOUT_ALL_DEVICES",
+                    String.format("User logged out from all devices. Initiated from IP: %s", getClientIP(httpRequest)),
+                    httpRequest
+            );
+
+            log.info("User logged out from all devices: {}", user.getUserId());
+
+        } catch (Exception e) {
+            log.error("Error during logout all devices: {}", e.getMessage());
+            throw new LogoutException("Logout from all devices failed: " + e.getMessage(), e);
+        }
+    }
+
+    public String extractUserEmailFromToken(String token) {
+        return jwtUtil.extractUsername(token);
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        String[] parts = email.split("@");
+        return parts[0].charAt(0) + "********@" + parts[1];
+    }
+
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null || xfHeader.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
+    }
+} 
+ 
+**org\sentinel\authservice\service\CustomUserDetails.java** 
+package org.sentinel.authservice.service;
+
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
+import org.sentinel.authservice.model.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+@RequiredArgsConstructor
+public class CustomUserDetails implements UserDetails {
+    private final User user;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+    }
+
+    @Override
+    public @Nullable String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getEmail();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !user.getLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return user.getEnabled();
+    }
+
+    public UUID getUserId(){
+        return user.getUserId();
+    }
+}
+ 
+ 
+**org\sentinel\authservice\service\CustomUserDetailsService.java** 
+package org.sentinel.authservice.service;
+
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.sentinel.authservice.exceptions.UserNotFoundException;
+import org.sentinel.authservice.model.User;
+import org.sentinel.authservice.repository.UserRepository;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+
+@Service
+@RequiredArgsConstructor
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
+
+        return new CustomUserDetails(user);
+    }
+} 
+ 
+**org\sentinel\authservice\service\EmailService.java** 
+package org.sentinel.authservice.service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class EmailService {
+
+    private final JavaMailSender mailSender;
+
+    @Value("${application.email.from}")
+    private String fromEmail;
+
+    @Value("${application.email.verification-url}")
+    private String verificationUrl;
+
+    @Value("${application.email.password-reset-url}")
+    private String passwordResetUrl;
+
+    @Async
+    public void sendVerificationEmail(String toEmail, String token) {
+        try {
+            String verificationLink = verificationUrl + "?token=" + token;
+
+            log.info("Sending verification email to: {}", maskEmail(toEmail));
+            log.debug("Verification link: {}", verificationLink);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Verify Your Email Address - Sentinel");
+            helper.setText(buildVerificationEmailBody(verificationLink), true); // true = HTML
+
+            mailSender.send(message);
+
+            log.info("Verification email sent successfully to: {}", maskEmail(toEmail));
+
+        } catch (MessagingException e) {
+            log.error("Failed to send verification email to: {}", maskEmail(toEmail), e);
+            throw new RuntimeException("Failed to send verification email", e);
+        }
+    }
+
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        try {
+            String resetLink = passwordResetUrl + "?token=" + token;
+
+            log.info("Sending password reset email to: {}", maskEmail(toEmail));
+            log.debug("Reset link: {}", resetLink);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Reset Your Password - Sentinel");
+            helper.setText(buildPasswordResetEmailBody(resetLink), true);
+
+            mailSender.send(message);
+
+            log.info("Password reset email sent successfully to: {}", maskEmail(toEmail));
+
+        } catch (MessagingException e) {
+            log.error("Failed to send password reset email to: {}", maskEmail(toEmail), e);
+            throw new RuntimeException("Failed to send password reset email", e);
+        }
+    }
+
+    @Async
+    public void sendAccountLockedEmail(String toEmail) {
+        try {
+            log.info("Sending account locked notification to: {}", maskEmail(toEmail));
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Account Security Alert - Sentinel");
+            helper.setText(buildAccountLockedEmailBody(), true);
+
+            mailSender.send(message);
+
+            log.info("Account locked email sent successfully to: {}", maskEmail(toEmail));
+
+        } catch (MessagingException e) {
+            log.error("Failed to send account locked email to: {}", maskEmail(toEmail), e);
+        }
+    }
+
+    private String buildVerificationEmailBody(String verificationLink) {
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            line-height: 1.6;
+                            color: #333;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 20px;
+                            background-color: #f9f9f9;
+                        }
+                        .content {
+                            background-color: white;
+                            padding: 30px;
+                            border-radius: 8px;
+                        }
+                        .button {
+                            display: inline-block;
+                            background-color: #4CAF50;
+                            color: white !important;
+                            padding: 12px 24px;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            margin: 20px 0;
+                        }
+                        .footer {
+                            margin-top: 20px;
+                            font-size: 12px;
+                            color: #666;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="content">
+                            <h2>Welcome to Sentinel! 🛡️</h2>
+                            <p>Thank you for registering. Please verify your email address to activate your account.</p>
+                            <p>
+                                <a href="%s" class="button">Verify Email Address</a>
+                            </p>
+                            <p>Or copy this link into your browser:</p>
+                            <p style="word-break: break-all; color: #666;">%s</p>
+                            <p class="footer">
+                                This link will expire in 24 hours.<br>
+                                If you didn't create an account, please ignore this email.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """.formatted(verificationLink, verificationLink);
+    }
+
+    private String buildPasswordResetEmailBody(String resetLink) {
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
+                        .content { background-color: white; padding: 30px; border-radius: 8px; }
+                        .button { 
+                            display: inline-block; 
+                            background-color: #2196F3; 
+                            color: white !important; 
+                            padding: 12px 24px; 
+                            text-decoration: none; 
+                            border-radius: 4px; 
+                            margin: 20px 0; 
+                        }
+                        .footer { margin-top: 20px; font-size: 12px; color: #666; }
+                        .warning { color: #ff9800; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="content">
+                            <h2>Password Reset Request 🔐</h2>
+                            <p>We received a request to reset your password for your Sentinel account.</p>
+                            <p>
+                                <a href="%s" class="button">Reset Password</a>
+                            </p>
+                            <p>Or copy this link into your browser:</p>
+                            <p style="word-break: break-all; color: #666;">%s</p>
+                            <p class="footer">
+                                <span class="warning">⚠️ This link will expire in 1 hour.</span><br><br>
+                                If you didn't request a password reset, please ignore this email.<br>
+                                Your password will remain unchanged.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """.formatted(resetLink, resetLink);
+    }
+
+    private String buildAccountLockedEmailBody() {
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
+                        .content { background-color: white; padding: 30px; border-radius: 8px; }
+                        .alert { 
+                            background-color: #fff3cd; 
+                            border-left: 4px solid #ffc107; 
+                            padding: 15px; 
+                            margin: 20px 0; 
+                        }
+                        .footer { margin-top: 20px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="content">
+                            <h2>⚠️ Account Security Alert</h2>
+                            <div class="alert">
+                                <p><strong>Your account has been temporarily locked</strong></p>
+                                <p>This happened due to multiple failed login attempts.</p>
+                            </div>
+                            <p>This is a security measure to protect your account from unauthorized access.</p>
+                            <p><strong>What happens next?</strong></p>
+                            <ul>
+                                <li>Your account will be automatically unlocked after 30 minutes</li>
+                                <li>Or you can contact support for immediate assistance</li>
+                            </ul>
+                            <p class="footer">
+                                If you didn't attempt to log in, please change your password immediately.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """;
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        String[] parts = email.split("@");
+        return parts[0].charAt(0) + "***@" + parts[1];
+    }
+}
+ 
+ 
+**org\sentinel\authservice\service\RefreshTokenService.java** 
+package org.sentinel.authservice.service;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.model.RefreshToken;
+import org.sentinel.authservice.model.User;
+import org.sentinel.authservice.exceptions.InvalidTokenException;
+import org.sentinel.authservice.repository.RefreshTokenRepository;
+import org.sentinel.authservice.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class RefreshTokenService {
+
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtUtil jwtUtil;
+
+    @Value("${application.security.refresh-token.max-active-per-user:5}")
+    private int maxActiveTokensPerUser;
+
+    /**
+     * Creates and persists a new refresh token
+     */
+    @Transactional
+    public String createRefreshToken(User user, HttpServletRequest request) {
+
+        // Enforce token limit per user
+        enforceTokenLimit(user.getUserId());
+
+        // Generate token family ID for rotation tracking
+        UUID tokenFamilyId = UUID.randomUUID();
+
+        // Generate the actual JWT refresh token
+        UserDetails userDetails = new CustomUserDetails(user);
+        String tokenString = jwtUtil.generateRefreshToken(userDetails);
+
+        // Hash the token before storing (NEVER store plain tokens)
+        String tokenHash = hashToken(tokenString);
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .tokenHash(tokenHash)
+                .user(user)
+                .tokenFamilyId(tokenFamilyId)
+                .deviceInfo(extractDeviceInfo(request))
+                .ipAddress(extractIpAddress(request))
+                .userAgent(extractUserAgent(request))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusMillis(jwtUtil.getRefreshExpiration()))
+                .revoked(false)
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+        log.info("Created refresh token for user: {}, family: {}", user.getUserId(), tokenFamilyId);
+
+        // Return the actual JWT token (not the hash)
+        return tokenString;
+    }
+
+    /**
+     * Validates refresh token and checks against database
+     */
+    @Transactional
+    public RefreshToken validateAndGetRefreshToken(String token) {
+
+        // First validate JWT structure and signature
+        if (!jwtUtil.isRefreshToken(token)) {
+            log.warn("Invalid token type provided");
+            throw new InvalidTokenException("Not a refresh token");
+        }
+
+        String tokenHash = hashToken(token);
+
+        // Find in database
+        RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new InvalidTokenException("Refresh token not found or already used"));
+
+        // Security checks
+        if (storedToken.isRevoked()) {
+            // CRITICAL: Token reuse detected - revoke entire family
+            log.warn("SECURITY ALERT: Revoked token reused! User: {}, Family: {}",
+                    storedToken.getUser().getUserId(), storedToken.getTokenFamilyId());
+            revokeTokenFamily(storedToken.getTokenFamilyId(), "Token reuse detected - possible theft");
+            throw new SecurityException("Token reuse detected. All tokens in family revoked for security.");
+        }
+
+        if (storedToken.getExpiresAt().isBefore(Instant.now())) {
+            log.debug("Refresh token expired for user: {}", storedToken.getUser().getUserId());
+            throw new InvalidTokenException("Refresh token expired");
+        }
+
+        // Update last used timestamp
+        storedToken.setLastUsedAt(Instant.now());
+        refreshTokenRepository.save(storedToken);
+
+        return storedToken;
+    }
+
+    /**
+     * Rotates refresh token (revokes old, creates new in same family)
+     */
+    @Transactional
+    public String rotateRefreshToken(RefreshToken oldToken, HttpServletRequest request) {
+
+        // Revoke the old token immediately
+        oldToken.setRevoked(true);
+        oldToken.setRevokedAt(Instant.now());
+        oldToken.setRevocationReason("Rotated");
+        refreshTokenRepository.save(oldToken);
+
+        // Generate new JWT token
+        UserDetails userDetails = new CustomUserDetails(oldToken.getUser());
+        String newTokenString = jwtUtil.generateRefreshToken(userDetails);
+        String newTokenHash = hashToken(newTokenString);
+
+        // Create new token in the same family
+        RefreshToken newToken = RefreshToken.builder()
+                .tokenHash(newTokenHash)
+                .user(oldToken.getUser())
+                .tokenFamilyId(oldToken.getTokenFamilyId()) // SAME FAMILY - important for security
+                .deviceInfo(extractDeviceInfo(request))
+                .ipAddress(extractIpAddress(request))
+                .userAgent(extractUserAgent(request))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusMillis(jwtUtil.getRefreshExpiration()))
+                .revoked(false)
+                .build();
+
+        refreshTokenRepository.save(newToken);
+
+        log.info("Rotated refresh token for user: {}, family: {}",
+                oldToken.getUser().getUserId(), oldToken.getTokenFamilyId());
+
+        return newTokenString;
+    }
+
+    /**
+     * Revoke all tokens in a family (for security incidents)
+     */
+    @Transactional
+    public void revokeTokenFamily(UUID tokenFamilyId, String reason) {
+        int revoked = refreshTokenRepository.revokeByFamilyId(
+                tokenFamilyId, Instant.now(), reason);
+        log.warn("SECURITY: Revoked {} tokens in family: {} - Reason: {}", revoked, tokenFamilyId, reason);
+    }
+
+    /**
+     * Revoke all user tokens (on logout all devices, password change, etc.)
+     */
+    @Transactional
+    public void revokeAllUserTokens(UUID userId, String reason) {
+        int revoked = refreshTokenRepository.revokeAllByUserId(
+                userId, Instant.now(), reason);
+        log.info("Revoked {} tokens for user: {} - Reason: {}", revoked, userId, reason);
+    }
+
+    /**
+     * Revoke specific token by its JWT string
+     */
+    @Transactional
+    public void revokeToken(String token, String reason) {
+        String tokenHash = hashToken(token);
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new InvalidTokenException("Token not found"));
+
+        if (!refreshToken.isRevoked()) {
+            refreshToken.setRevoked(true);
+            refreshToken.setRevokedAt(Instant.now());
+            refreshToken.setRevocationReason(reason);
+            refreshTokenRepository.save(refreshToken);
+
+            log.info("Revoked refresh token for user: {} - Reason: {}",
+                    refreshToken.getUser().getUserId(), reason);
+        }
+    }
+
+    /**
+     * Get all active tokens for a user
+     */
+    @Transactional(readOnly = true)
+    public List<RefreshToken> getActiveUserTokens(UUID userId) {
+        return refreshTokenRepository.findByUserUserIdAndRevokedFalseOrderByIssuedAtDesc(userId);
+    }
+
+    /**
+     * Enforce maximum active tokens per user
+     * Revokes oldest token when limit exceeded
+     */
+    private void enforceTokenLimit(UUID userId) {
+        long activeTokens = refreshTokenRepository.countActiveByUserId(userId);
+
+        if (activeTokens >= maxActiveTokensPerUser) {
+            List<RefreshToken> userTokens = refreshTokenRepository.findByUserUserIdAndRevokedFalseOrderByIssuedAtDesc(userId);
+
+            // Find and revoke the oldest token
+            userTokens.stream()
+                    .min(Comparator.comparing(RefreshToken::getIssuedAt))
+                    .ifPresent(oldest -> {
+                        oldest.setRevoked(true);
+                        oldest.setRevokedAt(Instant.now());
+                        oldest.setRevocationReason("Token limit exceeded");
+                        refreshTokenRepository.save(oldest);
+                        log.info("Revoked oldest token for user: {} due to limit", userId);
+                    });
+        }
+    }
+
+    /**
+     * Hash token using SHA-256 (one-way hash)
+     */
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 algorithm not available", e);
+        }
+    }
+
+    /**
+     * Extract IP address from request (handles proxy headers)
+     */
+    private String extractIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // If multiple IPs in X-Forwarded-For, get the first one
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+
+    /**
+     * Extract user agent from request
+     */
+    private String extractUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        return userAgent != null ? userAgent : "Unknown";
+    }
+
+    /**
+     * Extract basic device info (can be enhanced with libraries)
+     */
+    private String extractDeviceInfo(HttpServletRequest request) {
+        String userAgent = extractUserAgent(request);
+
+        // Basic detection
+        if (userAgent.contains("Mobile")) {
+            return "Mobile";
+        } else if (userAgent.contains("Tablet")) {
+            return "Tablet";
+        } else {
+            return "Desktop";
+        }
+    }
+
+    /**
+     * Cleanup expired and old revoked tokens
+     * Runs daily at 2 AM
+     */
+    @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        Instant now = Instant.now();
+        Instant cutoffDate = now.minus(Duration.ofDays(30)); // Keep revoked tokens for 30 days for audit
+
+        int deleted = refreshTokenRepository.deleteExpiredAndOldRevoked(now, cutoffDate);
+        log.info("Cleaned up {} expired/old refresh tokens", deleted);
+    }
+} 
+ 
+**org\sentinel\authservice\service\TokenBlacklistService.java** 
+package org.sentinel.authservice.service;
+
+import io.jsonwebtoken.Claims;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.exceptions.TokenBlacklistException;
+import org.sentinel.authservice.model.TokenBlacklist;
+import org.sentinel.authservice.repository.TokenBlacklistRepository;
+import org.sentinel.authservice.util.JwtUtil;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * Service for managing blacklisted ACCESS TOKENS.
+ * <p>
+ * Important: This is for access tokens only (short-lived, stateless).
+ * Refresh tokens should be managed via RefreshTokenService (long-lived, stateful with rotation).
+ * <p>
+ */
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class TokenBlacklistService {
+
+    private final TokenBlacklistRepository blacklistRepository;
+    private final JwtUtil jwtUtil;
+
+    /**
+     * Blacklist an access token (on logout or revocation)
+     */
+    @Transactional
+    @CacheEvict(value = "tokenBlacklist", key = "#result")
+    public void blacklistToken(String token, UUID userId, String reason) {
+        try {
+            // Extract JWT ID and expiration
+            String jti = jwtUtil.extractClaim(token, Claims::getId);
+            Instant expiresAt = jwtUtil.extractExpirationAsInstantTime(token);
+
+            // Check if already blacklisted
+            if (blacklistRepository.existsByTokenJti(jti)) {
+                log.debug("Token already blacklisted: {}", jti);
+                return;
+            }
+
+            TokenBlacklist blacklistedToken = TokenBlacklist.builder()
+                    .tokenJti(jti)
+                    .userId(userId)
+                    .expiresAt(expiresAt)
+                    .reason(reason)
+                    .build();
+
+            blacklistRepository.save(blacklistedToken);
+
+            log.info("Blacklisted access token - JTI: {}, User: {}, Reason: {}", jti, userId, reason);
+
+        } catch (Exception e) {
+            log.error("Failed to blacklist token: {}", e.getMessage(), e);
+            throw new TokenBlacklistException("Token blacklisting failed", e);
+        }
+    }
+
+    /**
+     * Check if token JTI is blacklisted (with caching)
+     */
+    @Cacheable(value = "tokenBlacklist", key = "#jti", unless = "#result == false")
+    public boolean isTokenBlacklisted(String jti) {
+        return blacklistRepository.existsByTokenJti(jti);
+    }
+
+    /**
+     * Check if token is blacklisted by extracting JTI from token
+     */
+    public boolean isTokenBlacklistedByToken(String token) {
+        try {
+            String jti = jwtUtil.extractClaim(token, Claims::getId);
+            return isTokenBlacklisted(jti);
+        } catch (Exception e) {
+            log.warn("Error checking blacklist for token: {}", e.getMessage());
+            // Fail securely - if we can't extract JTI, we can't confirm blacklist status
+            // Return false to allow JWT validation to handle the invalid token
+            return false;
+        }
+    }
+
+    /**
+     * Cleanup expired blacklist entries
+     * Runs daily at 2 AM
+     */
+    @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
+    @CacheEvict(value = "tokenBlacklist", allEntries = true)
+    public void cleanupExpiredBlacklist() {
+        Instant now = Instant.now();
+        int deleted = blacklistRepository.deleteExpiredTokens(now);
+        log.info("Cleaned up {} expired blacklist entries", deleted);
+    }
+
+    /**
+     * Get blacklist statistics for a user (useful for admin dashboard)
+     */
+    @Transactional(readOnly = true)
+    public long getBlacklistCountForUser(UUID userId) {
+        return blacklistRepository.countByUserId(userId);
+    }
+} 
+ 
+**org\sentinel\authservice\service\UserService.java** 
+package org.sentinel.authservice.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.dto.ChangePasswordDto;
+import org.sentinel.authservice.dto.RegisterRequest;
+import org.sentinel.authservice.dto.UserResponseDto;
+import org.sentinel.authservice.exceptions.EmailAlreadyVerifiedException;
+import org.sentinel.authservice.exceptions.InvalidTokenException;
+import org.sentinel.authservice.exceptions.UserAlreadyExistsException;
+import org.sentinel.authservice.exceptions.UserNotFoundException;
+import org.sentinel.authservice.model.Role;
+import org.sentinel.authservice.model.User;
+import org.sentinel.authservice.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    @Transactional
+    public User registerUser(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration attempt with existing email");
+            throw new UserAlreadyExistsException("User with this email already exists");
+        }
+
+        String verificationToken = generateSecureToken();
+
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.USER)
+                .enabled(false) // Require email verification
+                .locked(false)
+                .failedLoginAttempts(0)
+                .emailVerificationToken(verificationToken)
+                .emailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        User savedUser = userRepository.save(user);
+        log.info("User registered with ID: {}", savedUser.getUserId());
+
+        // Send verification email asynchronously
+        emailService.sendVerificationEmail(savedUser.getEmail(), verificationToken);
+
+        return savedUser;
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        User user = userRepository.findByEmailVerificationToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid verification token"));
+
+        if (user.getEmailVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new InvalidTokenException("Invalid or expired token");
+        }
+
+        user.markEmailAsVerified();
+        userRepository.save(user);
+
+        log.info("Email verified for user: {}", user.getUserId());
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = findByEmail(email);
+
+        if (user.isEmailVerified()) {
+            throw new EmailAlreadyVerifiedException("Email already verified");
+        }
+
+        String newToken = generateSecureToken();
+        user.setEmailVerificationToken(newToken);
+        user.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
+        userRepository.save(user);
+
+        emailService.sendVerificationEmail(user.getEmail(), newToken);
+        log.info("Verification email resent for user: {}", user.getUserId());
+    }
+
+    @Transactional
+    public void initiatePasswordReset(String email) {
+        try {
+            User user = findByEmail(email);
+
+            String resetToken = generateSecureToken();
+            user.setPasswordResetToken(resetToken);
+            user.setPasswordResetTokenExpiresAt(LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
+
+            emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+            log.info("Password reset initiated for user: {}", user.getUserId());
+
+        } catch (UserNotFoundException e) {
+            // Don't reveal if user exists or not
+            log.debug("Password reset requested for non-existent email");
+        }
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByPasswordResetToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid password reset token"));
+
+        if (user.getPasswordResetTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new InvalidTokenException("Password reset token has expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiresAt(null);
+        user.resetFailedLoginAttempts();
+        user.setLocked(false);
+        userRepository.save(user);
+
+        log.info("Password reset completed for user: {}", user.getUserId());
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, ChangePasswordDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+
+        log.info("Password changed for user: {}", userId);
+    }
+
+    public User findByEmail(String email) {
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> {
+                    log.debug("User not found with email");
+                    return new UserNotFoundException("User not found");
+                });
+    }
+
+    public User findById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    public Page<UserResponseDto> findAllUsers(Pageable pageable) {
+        return userRepository.findAllActiveUsers(pageable)
+                .map(this::toDto);
+    }
+
+    @Transactional
+    public void deleteUser(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Delete attempt for non-existent user: {}", id);
+                    return new UserNotFoundException("User not found");
+                });
+
+        if (user.getDeletedAt() != null) {
+            log.warn("Attempted to delete already deleted user: {}", id);
+            throw new IllegalStateException("User already deleted");
+        }
+
+        user.softDelete();
+        userRepository.save(user);
+
+        log.info("User soft deleted: {}", id);
+    }
+
+    @Transactional
+    public void incrementFailedLoginAttempts(User user) {
+        user.incrementFailedLoginAttempts();
+        userRepository.save(user);
+
+        if (user.getLocked()) {
+            emailService.sendAccountLockedEmail(user.getEmail());
+        }
+
+        log.info("Failed login attempts for user {}: {}",
+                user.getUserId(), user.getFailedLoginAttempts());
+    }
+
+    @Transactional
+    public void resetFailedLoginAttempts(User user) {
+        user.resetFailedLoginAttempts();
+        user.setLastSuccessfulLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.debug("Reset failed login attempts for user: {}", user.getUserId());
+    }
+
+    @Transactional
+    public void unlockUserAccount(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setLocked(false);
+        user.resetFailedLoginAttempts();
+        userRepository.save(user);
+
+        log.info("User account unlocked: {}", userId);
+    }
+
+    @Scheduled(cron = "0 0 * * * ?") // Run every hour
+    @Transactional
+    public void autoUnlockAccounts() {
+        LocalDateTime thirtyMinutesAgo = LocalDateTime.now().minusMinutes(30);
+        var lockedUsers = userRepository.findLockedUsersOlderThan(thirtyMinutesAgo);
+
+        for (User user : lockedUsers) {
+            user.setLocked(false);
+            user.resetFailedLoginAttempts();
+            userRepository.save(user);
+            log.info("Auto-unlocked account: {}", user.getUserId());
+        }
+    }
+
+    private String generateSecureToken() {
+        byte[] tokenBytes = new byte[32];
+        secureRandom.nextBytes(tokenBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+    }
+
+    private UserResponseDto toDto(User user) {
+        return UserResponseDto.builder()
+                .userId(user.getUserId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .enabled(user.getEnabled())
+                .locked(user.getLocked())
+                .createdAt(user.getCreatedAt())
+                .lastSuccessfulLoginAt(user.getLastSuccessfulLoginAt())
+                .build();
+    }
+} 
+ 
+**org\sentinel\authservice\util\JwtUtil.java** 
+package org.sentinel.authservice.util;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.authservice.service.CustomUserDetails;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+
+/**
+ * Utility class for JWT token operations.
+ * Handles token generation, validation, and claims extraction.
+ */
+@Slf4j
+@Component
+public class JwtUtil {
+
+    private static final String TOKEN_TYPE_CLAIM = "tokenType";
+    private static final String TOKEN_TYPE_ACCESS = "access";
+    private static final String TOKEN_TYPE_REFRESH = "refresh";
+    private static final String AUTHORITIES_CLAIM = "authorities";
+
+    private final SecretKey secretKey;
+    @Getter
+    private final long jwtExpiration;
+    @Getter
+    private final long refreshExpiration;
+
+    public JwtUtil(
+            @Value("${application.security.jwt.secret-key}") String secretKey,
+            @Value("${application.security.jwt.access-token.expiration}") long jwtExpiration,
+            @Value("${application.security.jwt.refresh-token.expiration}") long refreshExpiration) {
+
+        validateSecretKey(secretKey);
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+        this.jwtExpiration = jwtExpiration;
+        this.refreshExpiration = refreshExpiration;
+
+        log.info("JWT Util initialized with expiration: {}ms, refresh: {}ms",
+                jwtExpiration, refreshExpiration);
+    }
+
+    /**
+     * Validates that the secret key meets minimum security requirements
+     */
+    private void validateSecretKey(String secretKey) {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret key must be configured via environment variable JWT_SECRET_KEY");
+        }
+
+        byte[] decodedKey = Decoders.BASE64.decode(secretKey);
+        if (decodedKey.length < 32) { // 256 bits minimum for HS256
+            throw new IllegalStateException(
+                    "JWT secret key must be at least 256 bits (32 bytes) long");
+        }
+    }
+
+    /**
+     * Extracts username (subject) from token
+     */
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * Extracts a specific claim from the token
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimResolver.apply(claims);
+    }
+
+    /**
+     * Checks if token is a refresh token
+     */
+    public boolean isRefreshToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+            return TOKEN_TYPE_REFRESH.equals(tokenType);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Generates an access token for the given user
+     */
+    public String generateAccessToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put(TOKEN_TYPE_CLAIM, TOKEN_TYPE_ACCESS);
+        extraClaims.put(AUTHORITIES_CLAIM, userDetails
+                .getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList());
+
+        //-----------------Added to fix UUID error----------------------
+        if (userDetails instanceof CustomUserDetails) {
+            UUID userId = ((CustomUserDetails) userDetails).getUserId();
+            extraClaims.put("userId", userId.toString());
+        }
+        //-----------------Added to fix UUID error----------------------
+
+
+        return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    /**
+     * Generates a refresh token for the given user
+     */
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, TOKEN_TYPE_REFRESH);
+
+        // Add userId to refresh token too
+        if (userDetails instanceof CustomUserDetails) {
+            UUID userId = ((CustomUserDetails) userDetails).getUserId();
+            claims.put("userId", userId.toString());
+        }
+
+        return buildToken(claims, userDetails, refreshExpiration);
+    }
+
+    /**
+     * Builds a JWT token with the specified claims and expiration
+     */
+    private String buildToken(
+            Map<String, Object> extraClaims,
+            UserDetails userDetails,
+            long expiration) {
+
+        long currentTimeMillis = System.currentTimeMillis();
+        String jti = UUID.randomUUID().toString();
+
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .id(jti)
+                .issuedAt(new Date(currentTimeMillis))
+                .expiration(new Date(currentTimeMillis + expiration))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    /**
+     * Validates token against user details
+     * Checks username match and expiration
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        try {
+            final String username = extractUsername(token);
+            boolean isUsernameValid = username.equals(userDetails.getUsername());
+            boolean isNotExpired = !isTokenExpired(token);
+
+            if (!isUsernameValid) {
+                log.warn("Token username mismatch. Expected: {}, Found: {}",
+                        userDetails.getUsername(), username);
+            }
+
+            return isUsernameValid && isNotExpired;
+
+        } catch (ExpiredJwtException e) {
+            log.debug("Token expired for user: {}", userDetails.getUsername());
+            return false;
+        } catch (JwtException e) {
+            log.error("Token validation failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Checks if token is expired
+     */
+    private boolean isTokenExpired(String token) {
+        try {
+            return extractExpiration(token).before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
+    }
+
+    /**
+     * Extracts expiration date from token
+     */
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public Instant extractExpirationAsInstantTime(String token) {
+        return extractExpiration(token).toInstant();
+    }
+
+    /**
+     * Extracts all claims from token
+     *
+     * @throws ExpiredJwtException if token is expired
+     * @throws JwtException        if token is invalid
+     */
+    private Claims extractAllClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            log.debug("Attempted to parse expired JWT token");
+            throw e;
+        } catch (JwtException e) {
+            log.error("JWT parsing failed: {}", e.getMessage());
+            throw new JwtException("Invalid JWT token", e);
+        }
+    }
+} 
+ 

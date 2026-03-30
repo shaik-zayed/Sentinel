@@ -1,0 +1,761 @@
+======================================== 
+SERVICE: nmap_service 
+TOTAL FILES COLLECTED: 15 
+======================================== 
+ 
+**pom.xml** 
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sentinel</groupId>
+        <artifactId>Sentinel</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>nmap_service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>nmap_service</name>
+    <description>nmap_service</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2025.1.0</spring-cloud.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.docker-java</groupId>-->
+        <!--            <artifactId>docker-java</artifactId>-->
+        <!--            <version>3.7.0</version>-->
+        <!--        </dependency>-->
+
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-api</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-core</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-httpclient5</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-kafka</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+ 
+ 
+**application.yml** 
+server:
+  port: 8082
+
+spring:
+  application:
+    name: nmap-service
+  main:
+    banner-mode: off
+
+  kafka:
+    bootstrap-servers: 192.168.29.50:9092
+    #    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: nmap-service
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.type.mapping: scanCommand:org.sentinel.nmap_service.model.ScanCommandMessage
+        spring.json.trusted.packages: "org.sentinel.nmap_service.model"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+    listener:
+      concurrency: 3 # number of Kafka consumer threads (partition count = 3, so 1:1)
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: scanResult:org.sentinel.nmap_service.model.ScanResultMessage
+        acks: all
+        retries: 3
+        enable.idempotence: true
+
+topics:
+  input-name: scan_cmd
+  output-name: scan_result
+
+docker:
+  host: tcp://localhost:2375
+
+nmap:
+  image: "instrumentisto/nmap:latest"
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port} 
+ 
+**org\sentinel\nmap_service\NmapServiceApplication.java** 
+package org.sentinel.nmap_service;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class NmapServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(NmapServiceApplication.class, args);
+    }
+} 
+ 
+**org\sentinel\nmap_service\config\JacksonConfig.java** 
+package org.sentinel.nmap_service.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class JacksonConfig {
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+} 
+ 
+**org\sentinel\nmap_service\config\KafkaConfig.java** 
+package org.sentinel.nmap_service.config;
+
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.TopicBuilder;
+
+@EnableKafka
+@Configuration
+public class KafkaConfig {
+
+    @Value("${topics.input-name}")
+    private String inputTopic;
+
+    @Value("${topics.output-name}")
+    private String outputTopic;
+
+    @Bean
+    public NewTopic inputTopic() {
+        return TopicBuilder
+                .name(inputTopic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic outputTopic() {
+        return TopicBuilder
+                .name(outputTopic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+} 
+ 
+**org\sentinel\nmap_service\config\ScanExecutorConfig.java** 
+package org.sentinel.nmap_service.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+@Configuration
+public class ScanExecutorConfig {
+
+    @Bean(destroyMethod = "shutdown")
+    public ExecutorService scanExecutor() {
+        return new ThreadPoolExecutor(
+                5,               // corePoolSize  — concurrent scans
+                20,                         // maximumPoolSize
+                60L, TimeUnit.SECONDS,      // keepAliveTime for idle threads
+                new LinkedBlockingQueue<>(100), // bounded queue — backpressure if overloaded
+                new ThreadPoolExecutor.CallerRunsPolicy() // if queue full, slow down the consumer (safe fallback)
+        );
+    }
+} 
+ 
+**org\sentinel\nmap_service\exception\ContainerExecutionException.java** 
+package org.sentinel.nmap_service.exception;
+
+/**
+ * Thrown when a Docker container operation fails (creation, execution, log
+ * retrieval).
+ */
+public class ContainerExecutionException extends RuntimeException {
+    public ContainerExecutionException(String message) {
+        super(message);
+    }
+
+    public ContainerExecutionException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+ 
+ 
+**org\sentinel\nmap_service\model\ScanCommandMessage.java** 
+package org.sentinel.nmap_service.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ScanCommandMessage {
+    private String correlationId;
+    private UUID userId;
+    private UUID scanRequestId;
+    private UUID scanItemId;
+    private List<String> command;
+    private String target;
+    private Instant timestamp;
+    private String replyTopic;
+    private String scanMode;
+    private String protocol;
+} 
+ 
+**org\sentinel\nmap_service\model\ScanRequest.java** 
+package org.sentinel.nmap_service.model;
+
+import lombok.Builder;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+@Builder
+public class ScanRequest {
+    private UUID scanId;
+    private String target;
+    private String scanMode;
+    private boolean detectServiceVersion;
+    private boolean detectOs;
+    private String protocol;
+    private String portMode;
+    private String portValue;
+} 
+ 
+**org\sentinel\nmap_service\model\ScanResultMessage.java** 
+package org.sentinel.nmap_service.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ScanResultMessage {
+    private String correlationId;
+    private UUID userId;
+    private UUID scanRequestId;
+    private UUID scanItemId;
+    private String scanOutput;
+    private boolean success;
+    private String errorMessage;
+    private Integer exitCode;
+    private Instant completedAt;
+    private Long executionTimeMs;
+    private String warnings;
+} 
+ 
+**org\sentinel\nmap_service\service\DockerService.java** 
+package org.sentinel.nmap_service.service;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.WaitResponse;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.nmap_service.exception.ContainerExecutionException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+@Slf4j
+@Service
+public class DockerService {
+
+    @Value("${docker.host}")
+    private String dockerHost;
+
+    private DockerClient dockerClient;
+
+    @PostConstruct
+    public void init() {
+        log.info("Initializing Docker client -> {}", dockerHost);
+
+        DefaultDockerClientConfig config = DefaultDockerClientConfig
+                .createDefaultConfigBuilder()
+                .withDockerHost(dockerHost)
+                .build();
+
+        ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+                .dockerHost(config.getDockerHost())
+                .maxConnections(100)
+                .connectionTimeout(Duration.ofSeconds(30))
+                .responseTimeout(Duration.ofMinutes(5))
+                .build();
+
+        this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
+
+        // Fail fast: verify connection on startup so you know immediately if remote is unreachable
+        try {
+            dockerClient.pingCmd().exec();
+            log.info("Successfully connected to Docker daemon at {}", dockerHost);
+        } catch (Exception e) {
+            log.error("Cannot reach Docker daemon at {}. " +
+                    "Make sure the remote host has TCP port open (see setup guide).", dockerHost);
+            throw new RuntimeException("Docker connection failed: " + dockerHost, e);
+        }
+    }
+
+    public String startContainer(String imageName, String containerName, List<String> command) {
+        String containerId = null;
+
+        try {
+            // Step 1: Pull image on remote host if not already cached
+            try {
+                dockerClient.inspectImageCmd(imageName).exec();
+                log.info("Image already cached on remote host: {}", imageName);
+            } catch (NotFoundException e) {
+                log.warn("Image not on remote host, pulling {}...", imageName);
+                dockerClient.pullImageCmd(imageName)
+                        .withPlatform("linux/amd64")
+                        .exec(new PullImageResultCallback())
+                        .awaitCompletion();
+                log.info("Image pulled on remote host successfully");
+            }
+
+            // Step 2: Host config
+            // Remote is Linux so host networking works — nmap gets direct network access
+            HostConfig hostConfig = HostConfig.newHostConfig()
+                    .withAutoRemove(false)
+                    .withNetworkMode("host");
+
+            // Step 3: Create container on remote Docker host
+            CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
+                    .withName(containerName)
+                    .withHostConfig(hostConfig)
+                    .withUser("root")
+                    .withTty(false)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .withCmd(command)
+                    .exec();
+
+            containerId = container.getId();
+            log.info("Container created on remote host: {}", containerId);
+
+            // Step 4: Start the container
+            dockerClient.startContainerCmd(containerId).exec();
+            log.info("Container started on remote host, waiting for nmap to finish...");
+
+            // Step 5: Wait for completion (5 min max)
+            WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
+            boolean completed = dockerClient.waitContainerCmd(containerId)
+                    .exec(waitCallback)
+                    .awaitCompletion(5, TimeUnit.MINUTES);
+
+            if (!completed) {
+                throw new ContainerExecutionException("Scan timed out after 5 minutes");
+            }
+
+            WaitResponse waitResponse = waitCallback.getLastResponse();
+            int exitCode = waitResponse != null ? waitResponse.getStatusCode() : -1;
+            log.info("Container finished with exit code: {}", exitCode);
+
+            // Step 6: Stream logs back from remote container to local nmap-service
+            LogToStringCallback logCallback = new LogToStringCallback();
+            dockerClient.logContainerCmd(containerId)
+                    .withStdOut(true)
+                    .withStdErr(true)
+                    .exec(logCallback)
+                    .awaitCompletion();
+
+            String logs = logCallback.getLogs();
+            log.info("Scan output received from remote host: {} chars", logs.length());
+
+            // Step 7: Cleanup remote container
+            cleanupContainer(containerId);
+
+            return logs;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (containerId != null) cleanupContainer(containerId);
+            throw new ContainerExecutionException("Container operation interrupted", e);
+
+        } catch (ContainerExecutionException e) {
+            if (containerId != null) cleanupContainer(containerId);
+            throw e;
+
+        } catch (Exception e) {
+            log.error("Error running container on remote Docker host: {}", e.getMessage(), e);
+            if (containerId != null) cleanupContainer(containerId);
+            throw new ContainerExecutionException("Failed to run container on remote host", e);
+        }
+    }
+
+    private void cleanupContainer(String containerId) {
+        try {
+            dockerClient.removeContainerCmd(containerId).withForce(true).exec();
+            log.info("Remote container cleaned up: {}", containerId);
+        } catch (NotFoundException e) {
+            log.warn("Remote container already removed: {}", containerId);
+        } catch (Exception e) {
+            log.error("Failed to clean up remote container {}: {}", containerId, e.getMessage());
+        }
+    }
+} 
+ 
+**org\sentinel\nmap_service\service\KafkaNmapScanResultProducer.java** 
+package org.sentinel.nmap_service.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.nmap_service.model.ScanResultMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class KafkaNmapScanResultProducer {
+
+    @Value("${topics.output-name}")
+    private String topicName;
+
+    private final KafkaTemplate<String, ScanResultMessage> kafkaTemplate;
+
+    public void pushScanResult(ScanResultMessage result) {
+        String key = result.getCorrelationId();
+
+        log.debug("Sending scan result to Kafka. Topic: {}, Key: {}, Success: {}",
+                topicName, key, result.isSuccess());
+
+        CompletableFuture<SendResult<String, ScanResultMessage>> future =
+                kafkaTemplate.send(topicName, key, result);
+
+        future.whenComplete((sendResult, ex) -> {
+            if (ex != null) {
+                log.error("CRITICAL: Failed to send scan result to Kafka. " + "CorrelationId: {}, UserId: {}. Result data may be LOST! Error: {}",
+                        result.getCorrelationId(),
+                        result.getUserId(),
+                        ex.getMessage(),
+                        ex);
+            } else {
+                log.info("Scan result sent to Kafka. " + "CorrelationId: {}, Success: {}, Topic: {}, Partition: {}, Offset: {}, UserId: {}",
+                        result.getCorrelationId(),
+                        result.isSuccess(),
+                        topicName,
+                        sendResult.getRecordMetadata().partition(),
+                        sendResult.getRecordMetadata().offset(),
+                        result.getUserId());
+            }
+        });
+    }
+
+    public void pushScanResultSync(ScanResultMessage result) throws Exception {
+        String key = result.getCorrelationId();
+
+        log.debug("Sending scan result SYNCHRONOUSLY. CorrelationId: {}", key);
+
+        SendResult<String, ScanResultMessage> sendResult =
+                kafkaTemplate.send(topicName, key, result).get();
+
+        log.info("Scan result sent (sync). CorrelationId: {}, Partition: {}, Offset: {}",
+                result.getCorrelationId(),
+                sendResult.getRecordMetadata().partition(),
+                sendResult.getRecordMetadata().offset());
+    }
+} 
+ 
+**org\sentinel\nmap_service\service\KafkaScanCommandConsumer.java** 
+package org.sentinel.nmap_service.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sentinel.nmap_service.model.ScanCommandMessage;
+import org.sentinel.nmap_service.model.ScanResultMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class KafkaScanCommandConsumer {
+
+    private final DockerService dockerService;
+    private final KafkaNmapScanResultProducer resultProducer;
+    private final ExecutorService scanExecutor;  // inject the bean above
+
+    @Value("${nmap.image}")
+    private String imageName;
+
+    @KafkaListener(
+            topics = "${topics.input-name}",
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void consumeScanCommand(
+            @Payload ScanCommandMessage message,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset) {
+
+        log.info("Received scan command. CorrelationId: {}, UserId: {}, Target: {}, Partition: {}, Offset: {}",
+                message.getCorrelationId(),
+                message.getUserId(),
+                message.getTarget(),
+                partition,
+                offset);
+
+        // ✅ Submit to thread pool and return immediately — consumer thread is FREE
+        CompletableFuture.runAsync(() -> executeScan(message), scanExecutor);
+    }
+
+    private void executeScan(ScanCommandMessage message) {
+        String containerName = "nmap-scan-" + message.getCorrelationId().substring(0, 8) + "-" + System.nanoTime();
+        Instant startTime = Instant.now();
+
+        try {
+            log.info("Starting async nmap scan. Container: {}, Command: {}, User: {}",
+                    containerName, message.getCommand(), message.getUserId());
+
+            String scanOutput = dockerService.startContainer(imageName, containerName, message.getCommand());
+
+            Instant endTime = Instant.now();
+            long executionMs = Duration.between(startTime, endTime).toMillis();
+
+            log.info("Scan completed successfully. CorrelationId: {}, Duration: {}ms, Output size: {} bytes",
+                    message.getCorrelationId(), executionMs, scanOutput.length());
+
+            ScanResultMessage result = ScanResultMessage.builder()
+                    .correlationId(message.getCorrelationId())
+                    .userId(message.getUserId())
+                    .scanRequestId(message.getScanRequestId())
+                    .scanItemId(message.getScanItemId())
+                    .scanOutput(scanOutput)
+                    .success(true)
+                    .exitCode(0)
+                    .completedAt(endTime)
+                    .executionTimeMs(executionMs)
+                    .build();
+
+            resultProducer.pushScanResult(result);
+
+            log.info("Result sent to Kafka. CorrelationId: {}", message.getCorrelationId());
+
+        } catch (Exception e) {
+            Instant errorTime = Instant.now();
+            long executionMs = Duration.between(startTime, errorTime).toMillis();
+
+            log.error("Scan execution FAILED. CorrelationId: {}, Container: {}, Error: {}",
+                    message.getCorrelationId(), containerName, e.getMessage(), e);
+
+            ScanResultMessage errorResult = ScanResultMessage.builder()
+                    .correlationId(message.getCorrelationId())
+                    .userId(message.getUserId())
+                    .scanRequestId(message.getScanRequestId())
+                    .scanItemId(message.getScanItemId())
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .exitCode(-1)
+                    .completedAt(errorTime)
+                    .executionTimeMs(executionMs)
+                    .build();
+
+            resultProducer.pushScanResult(errorResult);
+
+            log.info("Error result sent to Kafka. CorrelationId: {}", message.getCorrelationId());
+        }
+    }
+} 
+ 
+**org\sentinel\nmap_service\service\LogToStringCallback.java** 
+package org.sentinel.nmap_service.service;
+
+import com.github.dockerjava.api.async.ResultCallbackTemplate;
+import com.github.dockerjava.api.model.Frame;
+
+public class LogToStringCallback extends ResultCallbackTemplate<LogToStringCallback, Frame> {
+
+    private final StringBuilder sb = new StringBuilder();
+
+    @Override
+    public void onNext(Frame frame) {
+        sb.append(new String(frame.getPayload()));
+    }
+
+    public String getLogs() {
+        return sb.toString();
+    }
+}
+ 
+ 
+**org\sentinel\nmap_service\service\WaitContainerResultCallback.java** 
+package org.sentinel.nmap_service.service;
+
+import com.github.dockerjava.api.async.ResultCallbackTemplate;
+import com.github.dockerjava.api.model.WaitResponse;
+
+public class WaitContainerResultCallback extends ResultCallbackTemplate<WaitContainerResultCallback, WaitResponse> {
+
+    private WaitResponse lastResponse;
+
+    @Override
+    public void onNext(WaitResponse response) {
+        this.lastResponse = response;
+    }
+
+    public WaitResponse getLastResponse() {
+        return lastResponse;
+    }
+}
+ 
+ 
