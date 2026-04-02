@@ -19,8 +19,8 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
 
 minio:
-  endpoint: ${MINIO_ENDPOINT:http://192.168.29.50:9000}
-#  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  #  endpoint: ${MINIO_ENDPOINT:http://192.168.29.50:9000}
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
   access-key: ${MINIO_ACCESS_KEY:sentinel}
   secret-key: ${MINIO_SECRET_KEY:sentinel123}
   bucket: ${MINIO_BUCKET:sentinel-reports}
@@ -29,3 +29,19 @@ minio:
 
 scan-service:
   base-url: lb://scan-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true

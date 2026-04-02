@@ -7,7 +7,8 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: jdbc:mysql://localhost:3306/mydb
+    #    url: jdbc:mysql://localhost:3306/mydb
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/mydb}
     username: ${DB_USERNAME:zayed}
     password: ${DB_PASSWORD:zayed}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -19,10 +20,12 @@ spring:
       hibernate:
         format_sql: true
   mail:
-#    host: ${SMTP_HOST:localhost}
-#    port: ${SMTP_PORT:2525}
-    host: ${SMTP_HOST:192.168.29.50}
-    port: ${SMTP_PORT:2525}
+    #    host: ${SMTP_HOST:localhost}
+    #    port: ${SMTP_PORT:2525}
+    #    host: ${SMTP_HOST:192.168.29.50}
+    #    port: ${SMTP_PORT:2525}
+    host: ${SMTP_HOST:smtp4dev}
+    port: ${SMTP_PORT:25}
     username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
     properties:
@@ -48,10 +51,6 @@ application:
         expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000} # 15 minutes (reduced to 15 minutes from 1 hour)
       refresh-token:
         expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000} # 7 days
-    # will uncomment when ready to use RSA keys
-    # rsa:
-    #   private-key: ${RSA_PRIVATE_KEY:classpath:certs/private.pem}
-    #   public-key: ${RSA_PUBLIC_KEY:classpath:certs/public.pem}
   email:
     from: ${EMAIL_FROM:noreply@sentinel.local}
     verification-url: ${EMAIL_VERIFICATION_URL:http://localhost:3000/verify-email}
@@ -71,3 +70,19 @@ eureka:
 logging:
   level:
     org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true

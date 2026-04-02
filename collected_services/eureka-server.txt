@@ -87,7 +87,22 @@ spring:
 eureka:
   client:
     register-with-eureka: false
-    fetch-registry: false 
+    fetch-registry: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true 
  
 **org\sentinel\eurekaserver\EurekaServerApplication.java** 
 package org.sentinel.eurekaserver;

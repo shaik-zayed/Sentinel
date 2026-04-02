@@ -150,7 +150,8 @@ spring:
     banner-mode: off
 
   datasource:
-    url: jdbc:mysql://localhost:3306/scan_results
+    #    url: jdbc:mysql://localhost:3306/scan_results
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/scan_results}
     username: ${DB_USERNAME:zayed}
     password: ${DB_PASSWORD:zayed}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -163,8 +164,9 @@ spring:
         format_sql: true
 
   kafka:
-#    bootstrap-servers: localhost:9092
-    bootstrap-servers: 192.168.29.50:9092
+    #    bootstrap-servers: localhost:9092
+    #    bootstrap-servers: 192.168.29.50:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -197,11 +199,28 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+#      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka}
     registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port} 
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true 
  
 **org\sentinel\scan_service\ScanServiceApplication.java** 
 package org.sentinel.scan_service;

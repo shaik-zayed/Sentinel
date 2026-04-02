@@ -168,7 +168,23 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka} 
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true 
  
 **org\sentinel\apigateway\ApiGatewayApplication.java** 
 package org.sentinel.apigateway;

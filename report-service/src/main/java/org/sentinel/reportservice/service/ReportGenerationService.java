@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.sentinel.reportservice.model.NmapRun;
 
+//No use of this service used on for testing.
 @Service
 @RequiredArgsConstructor
 public class ReportGenerationService {
