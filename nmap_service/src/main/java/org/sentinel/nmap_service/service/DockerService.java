@@ -26,6 +26,9 @@ public class DockerService {
     @Value("${docker.host}")
     private String dockerHost;
 
+    @Value("${nmap.scan-timeout-minutes}")
+    private int scanTimeout;
+
     private DockerClient dockerClient;
 
     @PostConstruct
@@ -102,7 +105,7 @@ public class DockerService {
             WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
             boolean completed = dockerClient.waitContainerCmd(containerId)
                     .exec(waitCallback)
-                    .awaitCompletion(5, TimeUnit.MINUTES);
+                    .awaitCompletion(scanTimeout, TimeUnit.MINUTES);
 
             if (!completed) {
                 throw new ContainerExecutionException("Scan timed out after 5 minutes");

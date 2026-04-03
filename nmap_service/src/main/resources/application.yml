@@ -1,11 +1,14 @@
 server:
   port: 8082
+  shutdown: graceful
 
 spring:
   application:
     name: nmap-service
   main:
     banner-mode: off
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   kafka:
     #    bootstrap-servers: localhost:9092
@@ -43,6 +46,7 @@ docker:
 
 nmap:
   image: "instrumentisto/nmap:latest"
+  scan-timeout-minutes: 5
 
 eureka:
   client:

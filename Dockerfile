@@ -55,8 +55,7 @@ ENV JAVA_TOOL_OPTIONS="\
     -XX:MaxRAMPercentage=75.0 \
     -XX:+ExitOnOutOfMemoryError \
     -Djava.net.preferIPv4Stack=true \
-    -Dfile.encoding=UTF-8 \
-    -Dspring.output.ansi.enabled=ALWAYS"
+    -Dfile.encoding=UTF-8"
 
 # Switch to non-root before copying application files
 USER sentinel
@@ -65,7 +64,5 @@ COPY --from=extractor --chown=sentinel:sentinel /app/extracted/dependencies/    
 COPY --from=extractor --chown=sentinel:sentinel /app/extracted/spring-boot-loader/    ./
 COPY --from=extractor --chown=sentinel:sentinel /app/extracted/snapshot-dependencies/ ./
 COPY --from=extractor --chown=sentinel:sentinel /app/extracted/application/           ./
-
-EXPOSE 8080
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

@@ -1,5 +1,6 @@
 server:
   port: 8083
+  shutdown: graceful
 
 spring:
   application:
@@ -9,8 +10,8 @@ spring:
   datasource:
     #    url: jdbc:mysql://localhost:3306/mydb
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/mydb}
-    username: ${DB_USERNAME:zayed}
-    password: ${DB_PASSWORD:zayed}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -39,7 +40,8 @@ spring:
           timeout: 10000
           writetimeout: 10000
         debug: true
-
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 application:
   cors:

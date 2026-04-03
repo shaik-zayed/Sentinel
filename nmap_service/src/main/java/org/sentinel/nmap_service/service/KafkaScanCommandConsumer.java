@@ -6,6 +6,7 @@ import org.sentinel.nmap_service.model.ScanCommandMessage;
 import org.sentinel.nmap_service.model.ScanResultMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -23,7 +24,7 @@ public class KafkaScanCommandConsumer {
 
     private final DockerService dockerService;
     private final KafkaNmapScanResultProducer resultProducer;
-    private final ExecutorService scanExecutor;  // inject the bean above
+    private final ExecutorService scanExecutor;
 
     @Value("${nmap.image}")
     private String imageName;
@@ -35,6 +36,7 @@ public class KafkaScanCommandConsumer {
     )
     public void consumeScanCommand(
             @Payload ScanCommandMessage message,
+            Acknowledgment ack,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset) {
 
@@ -45,19 +47,23 @@ public class KafkaScanCommandConsumer {
                 partition,
                 offset);
 
-        // ✅ Submit to thread pool and return immediately — consumer thread is FREE
-        CompletableFuture.runAsync(() -> executeScan(message), scanExecutor);
+        CompletableFuture.runAsync(() -> processMessage(message, ack), scanExecutor);
     }
 
-    private void executeScan(ScanCommandMessage message) {
-        String containerName = "nmap-scan-" + message.getCorrelationId().substring(0, 8) + "-" + System.nanoTime();
+    private void processMessage(ScanCommandMessage message, Acknowledgment ack) {
         Instant startTime = Instant.now();
+        String containerName = "nmap-scan-" +
+                message.getCorrelationId().substring(0, 8) + "-" + System.nanoTime();
 
         try {
-            log.info("Starting async nmap scan. Container: {}, Command: {}, User: {}",
+            log.info("Starting nmap scan. Container: {}, Command: {}, User: {}",
                     containerName, message.getCommand(), message.getUserId());
 
-            String scanOutput = dockerService.startContainer(imageName, containerName, message.getCommand());
+            String scanOutput = dockerService.startContainer(
+                    imageName,
+                    containerName,
+                    message.getCommand()
+            );
 
             Instant endTime = Instant.now();
             long executionMs = Duration.between(startTime, endTime).toMillis();
@@ -79,7 +85,9 @@ public class KafkaScanCommandConsumer {
 
             resultProducer.pushScanResult(result);
 
-            log.info("Result sent to Kafka. CorrelationId: {}", message.getCorrelationId());
+            ack.acknowledge();
+
+            log.info("Scan success + offset committed. CorrelationId: {}", message.getCorrelationId());
 
         } catch (Exception e) {
             Instant errorTime = Instant.now();
@@ -102,7 +110,8 @@ public class KafkaScanCommandConsumer {
 
             resultProducer.pushScanResult(errorResult);
 
-            log.info("Error result sent to Kafka. CorrelationId: {}", message.getCorrelationId());
+            log.warn("Offset NOT acknowledged (will retry). CorrelationId: {}",
+                    message.getCorrelationId());
         }
     }
 }

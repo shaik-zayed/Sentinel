@@ -1,18 +1,21 @@
 server:
   port: 8085
+  shutdown: graceful
 
 spring:
   application:
     name: report-service
   main:
     banner-mode: off
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 eureka:
   client:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka}
     registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: true
