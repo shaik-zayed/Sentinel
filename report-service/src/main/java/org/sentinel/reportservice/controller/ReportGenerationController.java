@@ -7,24 +7,11 @@ import org.sentinel.reportservice.model.ReportFormat;
 import org.sentinel.reportservice.service.ReportOrchestrator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.UUID;
 
-/**
- * Two endpoints:
- *
- *   POST /api/v1/report/{scanId}?format=pdf|html|json|docx
- *     → Generates or returns cached report.
- *     → Returns { status: "READY", downloadUrl: "..." } immediately.
- *     → No polling needed.
- *
- *   GET  /api/v1/report/{scanId}/formats
- *     → Shows which formats are already cached in MinIO.
- *     → Useful for a frontend to show "Download PDF / HTML / ..." buttons.
- *
- * The X-User-Id header is injected by api-gateway's JwtValidationFilter
- * from the JWT. It is forwarded to scan-service to authorise the XML fetch.
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/report")
@@ -35,21 +22,21 @@ public class ReportGenerationController {
 
     /**
      * Generate (or return cached) report in the requested format.
-     *
+     * <p>
      * Example:
-     *   POST /api/v1/report/3fa85f64-5717-4562-b3fc-2c963f66afa6?format=pdf
-     *   Authorization: Bearer <token>
-     *
+     * POST /api/v1/report/3fa85f64-5717-4562-b3fc-2c963f66afa6?format=pdf
+     * Authorization: Bearer <token>
+     * <p>
      * Response:
-     *   200 OK
-     *   {
-     *     "scanId": "3fa85f64-...",
-     *     "format": "pdf",
-     *     "status": "READY",
-     *     "downloadUrl": "http://localhost:9000/sentinel-reports/reports/3fa85f64-.../report.pdf?X-Amz-...",
-     *     "expiresIn": "60 minutes",
-     *     "contentType": "application/pdf"
-     *   }
+     * 200 OK
+     * {
+     * "scanId": "3fa85f64-...",
+     * "format": "pdf",
+     * "status": "READY",
+     * "downloadUrl": "http://localhost:9000/sentinel-reports/reports/3fa85f64-.../report.pdf?X-Amz-...",
+     * "expiresIn": "60 minutes",
+     * "contentType": "application/pdf"
+     * }
      */
     @PostMapping("/{scanId}")
     public ResponseEntity<ReportResponse> generateReport(
@@ -71,21 +58,21 @@ public class ReportGenerationController {
 
     /**
      * List which formats are already cached in MinIO for this scan.
-     *
+     * <p>
      * Example:
-     *   GET /api/v1/report/3fa85f64-.../formats
-     *
+     * GET /api/v1/report/3fa85f64-.../formats
+     * <p>
      * Response:
-     *   200 OK
-     *   {
-     *     "scanId": "3fa85f64-...",
-     *     "cachedFormats": {
-     *       "pdf":  true,
-     *       "html": false,
-     *       "json": true,
-     *       "docx": false
-     *     }
-     *   }
+     * 200 OK
+     * {
+     * "scanId": "3fa85f64-...",
+     * "cachedFormats": {
+     * "pdf":  true,
+     * "html": false,
+     * "json": true,
+     * "docx": false
+     * }
+     * }
      */
     @GetMapping("/{scanId}/formats")
     public ResponseEntity<ReportResponse> getCachedFormats(
@@ -95,7 +82,27 @@ public class ReportGenerationController {
         return ResponseEntity.ok(orchestrator.getCachedFormats(scanId));
     }
 
-    // -----------------------------------------------------------------------
+    @GetMapping("/{scanId}/download")
+    public ResponseEntity<byte[]> downloadReport(
+            @PathVariable UUID scanId,
+            @RequestParam String format,
+            @RequestHeader("X-User-Id") String userId) {
+
+        ReportFormat reportFormat = parseFormat(format);
+
+        log.info("Download requested. scanId={}, format={}, userId={}", scanId, reportFormat, userId);
+
+        byte[] content = orchestrator.getReportBytes(scanId, reportFormat, userId);
+
+        String filename = "report-" + scanId + "." + format.toLowerCase();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(reportFormat.contentType()))
+                .body(content);
+    }
+    // ----------------------------------------------------------------------------------------
 
     private ReportFormat parseFormat(String format) {
         try {

@@ -1,0 +1,4 @@
+### GET all scans of the user
+GET {{host}}/api/v1/scan/list
+Authorization: Bearer {{accessToken}}
+X-User-Id: {{userId}}

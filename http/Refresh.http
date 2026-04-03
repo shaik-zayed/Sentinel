@@ -3,7 +3,6 @@ Authorization: Bearer {{refreshToken}}
 
 > {%
     const body = response.body;
-
     client.global.set("accessToken", body.accessToken);
     client.global.set("refreshToken", body.refreshToken);
 %}

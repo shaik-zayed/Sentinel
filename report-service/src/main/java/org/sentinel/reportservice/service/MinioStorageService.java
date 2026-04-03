@@ -86,4 +86,18 @@ public class MinioStorageService {
             throw new RuntimeException("Failed to generate download URL: " + e.getMessage(), e);
         }
     }
+
+    public byte[] download(String objectPath) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectPath)
+                            .build()
+            ).readAllBytes();
+        } catch (Exception e) {
+            log.error("Failed to download from MinIO: object={}, error={}", objectPath, e.getMessage());
+            throw new RuntimeException("Failed to download report: " + e.getMessage(), e);
+        }
+    }
 }

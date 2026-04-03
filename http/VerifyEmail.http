@@ -3,5 +3,5 @@ POST {{host}}/api/v1/auth/verify-email
 Content-Type: application/json
 
 {
-  "token": "AMAjLkT0gtWFGZURdzBC_vaSoBXj7-dFEBqf5jVfVpQ"
+  "token": "_FkazaVfV8egoL1s7gir-F0Z-YyrkSvJv-Euxol4GDE"
 }

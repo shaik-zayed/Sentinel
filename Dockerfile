@@ -55,7 +55,8 @@ ENV JAVA_TOOL_OPTIONS="\
     -XX:MaxRAMPercentage=75.0 \
     -XX:+ExitOnOutOfMemoryError \
     -Djava.net.preferIPv4Stack=true \
-    -Dfile.encoding=UTF-8"
+    -Dfile.encoding=UTF-8 \
+    -Dspring.output.ansi.enabled=ALWAYS"
 
 # Switch to non-root before copying application files
 USER sentinel

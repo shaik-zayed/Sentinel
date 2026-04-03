@@ -48,3 +48,6 @@ management:
       enabled: true
     livenessstate:
       enabled: true
+
+report:
+  download-base-url: ${REPORT_DOWNLOAD_BASE_URL:http://localhost:7777}

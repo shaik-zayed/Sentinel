@@ -1,0 +1,5 @@
+### Generate the report using scanId and format
+POST {{host}}}/api/v1/report/{{scanId}}?format=pdf
+Authorization: Bearer {{accessToken}}
+X-User-Id: {{userId}}
+###

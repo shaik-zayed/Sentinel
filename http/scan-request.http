@@ -13,3 +13,8 @@ X-User-Id: {{userId}}
   "portMode": "COMMON",
   "portValue": "top-100"
 }
+
+> {%
+    const data = response.body;
+    client.global.set("scanId", data.scanId);
+%}

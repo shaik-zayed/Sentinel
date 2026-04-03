@@ -1,0 +1,4 @@
+### GET scan status by scan-id
+GET {{host}}/api/v1/scan/{{scanId}}
+Authorization: Bearer {{accessToken}}
+X-User-Id: {{userId}}

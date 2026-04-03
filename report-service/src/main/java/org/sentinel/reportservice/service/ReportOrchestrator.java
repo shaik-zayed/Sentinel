@@ -52,6 +52,9 @@ public class ReportOrchestrator {
     @Value("${minio.url-expiry-minutes}")
     private int urlExpiryMinutes;
 
+    @Value("${report.download-base-url:http://localhost:7777}")
+    private String downloadBaseUrl;
+
     /**
      * Main entry point.
      * Returns a ReportResponse with a pre-signed download URL.
@@ -161,15 +164,43 @@ public class ReportOrchestrator {
         };
     }
 
+//    private ReportResponse buildResponse(UUID scanId, ReportFormat format, String objectPath) {
+//        String url = minioStorage.generatePresignedUrl(objectPath);
+//        return ReportResponse.builder()
+//                .scanId(scanId)
+//                .format(format.name().toLowerCase())
+//                .status("READY")
+//                .downloadUrl(url)
+//                .expiresIn(urlExpiryMinutes + " minutes")
+//                .contentType(format.contentType())
+//                .build();
+//    }
+
+    //Workaround that makes the report to download through the report service.
     private ReportResponse buildResponse(UUID scanId, ReportFormat format, String objectPath) {
-        String url = minioStorage.generatePresignedUrl(objectPath);
+        // Point to our own proxy endpoint, not MinIO directly
+        String downloadUrl = downloadBaseUrl
+                + "/api/v1/report/" + scanId
+                + "/download?format=" + format.name().toLowerCase();
+
         return ReportResponse.builder()
                 .scanId(scanId)
                 .format(format.name().toLowerCase())
                 .status("READY")
-                .downloadUrl(url)
-                .expiresIn(urlExpiryMinutes + " minutes")
+                .downloadUrl(downloadUrl)
+                .expiresIn("session")
                 .contentType(format.contentType())
                 .build();
+    }
+
+    public byte[] getReportBytes(UUID scanId, ReportFormat format, String userId) {
+        String objectPath = format.objectPath(scanId.toString());
+
+        // Generate if not cached yet
+        if (!minioStorage.exists(objectPath)) {
+            getOrGenerate(scanId, format, userId);
+        }
+
+        return minioStorage.download(objectPath);
     }
 }
