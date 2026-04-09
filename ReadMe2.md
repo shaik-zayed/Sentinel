@@ -1,10 +1,9 @@
-## Sentinel — Vulnerability Assessment Platform
+# Sentinel
 
-A distributed, microservices-based vulnerability assessment platform that allows security professionals and developers
-to run Nmap network scans, manage results, and generate detailed reports all through a secure, authenticated REST API.
+> Distributed vulnerability assessment platform — authenticated Nmap scanning, async execution, and multi-format report
+> generation via a microservices REST API.
 
-
-![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square)
+![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=flat-square)
 ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2025-6DB33F?style=flat-square)
 ![Kafka](https://img.shields.io/badge/Kafka-KRaft-231F20?style=flat-square)
@@ -15,39 +14,153 @@ to run Nmap network scans, manage results, and generate detailed reports all thr
 
 ---
 
-### Overview
+## Overview
 
-Users register, verify their email, and log in. Once authenticated, they configure a network scan choosing the target,
-scan type, port range, OS detection, and service version detection. The scan request is submitted through the API
-Gateway and processed **asynchronously**: a Kafka pipeline decouples the request intake from the actual scan execution,
-allowing multiple users to run concurrent scans without blocking.
+Users register, verify their email, and log in. Once authenticated, they configure a network scan — choosing the target,
+scan mode, port range, protocol, OS detection, and service version detection. The request is submitted through the API
+Gateway and processed **asynchronously**: a Kafka pipeline fully decouples request intake from scan execution, allowing
+multiple users to run concurrent scans without blocking.
 
-A dedicated Nmap service consumes scan jobs from Kafka, dynamically spins up an ephemeral Docker container running Nmap,
-executes the scan, captures the output, and publishes results back through Kafka. The scan service persists results to
-MySQL. Users can then request a report for any completed scan, which is generated in their chosen format (PDF, HTML, or
-DOCX) and stored in MinIO object storage downloadable via the report service.
+A dedicated Nmap service consumes scan jobs from Kafka, spins up an ephemeral Docker container, executes the scan,
+captures output, and publishes results back through Kafka. The scan service persists results to MySQL. Users can then
+request a report for any completed scan — generated as PDF, HTML, or DOCX — stored in MinIO and downloadable via the
+report service.
 
 ---
 
-### Architecture
+## Architecture
 
-![Architecture Diagram](./assets/architecture.svg)
+```mermaid
+flowchart TD
 
-### Flow Diagram
+subgraph Outer[" "]
+direction TB
+style Outer fill: #f6f8fa,stroke: #f6f8fa
 
-![Flow Diagram](./assets/flow.svg)
+subgraph Client_Layer["🌐 Client"]
+Client["Browser / REST Client"]
+end
+
+subgraph Gateway_Layer["🚪 API Gateway :7777"]
+Gateway["JWT validation · routing · request tracing"]
+end
+
+subgraph Service_Layer["🧠 Core Services"]
+Auth["🔐 Auth Service :8083\nRegistration · Login · JWT · Blacklist"]
+Scan["📡 Scan Service :8081\nRequest intake · Result persistence"]
+Report["📄 Report Service :8085\nGeneration · MinIO storage"]
+Nmap["🐳 Nmap Service :8082\nDocker orchestration · Scan execution"]
+end
+
+subgraph Discovery_Layer["🔍 Service Discovery"]
+Eureka["Eureka Server :8761"]
+end
+
+subgraph Infra_Layer["💾 Infrastructure"]
+MySQL[("MySQL :3306")]
+MinIO[("MinIO :9000")]
+Kafka[("Kafka :9092")]
+SMTP["smtp4dev :25 / :5000"]
+end
+
+Client --> Gateway
+Gateway --> Auth & Scan & Report
+
+Gateway -.->|discover| Eureka
+Auth -.->|register|Eureka
+Scan -.->|register|Eureka
+Report -.->|register|Eureka
+Nmap -.->|register|Eureka
+
+Scan -->|publish ScanCommand|Kafka
+Kafka -->|consume|Nmap
+Nmap -->|publish ScanResult|Kafka
+Kafka -->|consume|Scan
+
+Scan --> MySQL
+Auth --> MySQL
+Auth --> SMTP
+Report --> MinIO
+Nmap -.->|spawns|Docker["Docker daemon\nephemeral nmap containers"]
+end
+```
+
 ---
 
-### Services
+## Request Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant G as API Gateway
+    participant A as Auth Service
+    participant S as Scan Service
+    participant K as Kafka
+    participant N as Nmap Service
+    participant DB as MySQL
+    participant R as Report Service
+    participant M as MinIO
+
+    rect rgb(240,248,240)
+        Note over C, M: 🔐 Phase 1 — Authentication & Scan Submission
+        C ->> G: POST /api/v1/auth/login
+        G ->> A: Forward login request
+        A ->> DB: Validate credentials
+        DB -->> A: User record
+        A -->> C: Access token + Refresh token
+        C ->> G: POST /api/v1/scan/submit [Bearer token]
+        G ->> G: Validate JWT
+        G ->> S: Forward request + X-User-Id header
+        S ->> DB: INSERT scan (status = ACCEPTED)
+        S ->> K: Publish ScanCommand (correlationId)
+        S -->> C: 202 Accepted { scanId }
+    end
+
+    rect rgb(255,248,235)
+        Note over C, M: ⚙️ Phase 2 — Asynchronous Scan Execution
+        K ->> N: Deliver ScanCommand
+        N ->> N: Pull nmap image (if not cached)
+        N ->> N: Create & start ephemeral container
+        N ->> N: Execute nmap, capture stdout/stderr
+        N ->> K: Publish ScanResult (output, exitCode)
+        K ->> S: Deliver ScanResult
+        S ->> DB: UPDATE scan (status = FINISHED, output)
+    end
+
+    rect rgb(240,244,255)
+        Note over C, M: 📄 Phase 3 — Report Generation & Download
+        C ->> G: POST /api/v1/report/{scanId}?format=PDF
+        G ->> R: Forward + X-User-Id header
+        R ->> S: GET /api/v1/scan/{scanId}/result
+        S ->> DB: Fetch scan output
+        DB -->> S: Raw scan output
+        S -->> R: ScanResultResponse
+        R ->> R: Parse XML → build ReportData
+        R ->> R: Render PDF / HTML / DOCX
+        R ->> M: Upload report object
+        M -->> R: Upload confirmed
+        R -->> C: Download URL
+        C ->> G: GET /api/v1/report/{scanId}/download?format=PDF
+        G ->> R: Forward download request
+        R ->> M: Fetch report bytes
+        M -->> R: File content
+        R -->> C: PDF / HTML / DOCX file
+    end
+```
+
+---
+
+## Services
 
 | Service          | Port | Responsibility                                                                                             |
 |------------------|------|------------------------------------------------------------------------------------------------------------|
-| `api-gateway`    | 7777 | Single entry point. JWT validation, load-balanced routing via Eureka, request ID tracing                   |
-| `auth-service`   | 8083 | User registration, email verification, JWT access + refresh tokens, token blacklisting, logout             |
-| `scan-service`   | 8081 | Accepts scan requests, publishes to Kafka, persists results from Kafka, exposes scan query APIs            |
-| `nmap-service`   | 8082 | Consumes scan jobs from Kafka, builds Nmap command, spins up ephemeral Docker container, publishes results |
-| `report-service` | 8085 | Fetches scan results from scan-service, generates reports, uploads to MinIO, serves downloads              |
-| `eureka-server`  | 8761 | Netflix Eureka service registry for service discovery                                                      |
+| `api-gateway`    | 7777 | Single entry point — JWT validation, load-balanced routing via Eureka, request ID tracing                  |
+| `auth-service`   | 8083 | Registration, email verification, JWT access + refresh tokens, token blacklisting, password reset          |
+| `scan-service`   | 8081 | Accepts scan requests, publishes to Kafka, persists results, exposes query and status APIs                 |
+| `nmap-service`   | 8082 | Consumes scan jobs from Kafka, builds Nmap command, manages ephemeral Docker containers, publishes results |
+| `report-service` | 8085 | Fetches scan results, generates reports (PDF/HTML/DOCX), uploads to MinIO, serves downloads                |
+| `eureka-server`  | 8761 | Netflix Eureka service registry — service discovery and client-side load balancing                         |
 
 ---
 
@@ -75,9 +188,8 @@ DOCX) and stored in MinIO object storage downloadable via the report service.
 
 Nmap scans are slow — a full port scan can take minutes. A synchronous HTTP call would block the scan-service thread for
 the entire duration, making the system unable to handle concurrent users. Kafka decouples the two services completely:
-scan-service publishes a job and immediately returns a scan ID to the user. The nmap-service processes jobs
-independently, at its own pace, with a thread pool handling up to 20 concurrent scans. Results flow back through a
-separate Kafka topic.
+scan-service publishes a job and immediately returns a scan ID. The nmap-service processes jobs independently with a
+thread pool handling up to 20 concurrent scans. Results flow back through a separate Kafka topic.
 
 **Why does the API Gateway handle JWT validation instead of each service?**
 
@@ -145,6 +257,7 @@ header and go through the API Gateway at `http://localhost:7777`.
 | Method | Endpoint                        | Description                                        |
 |--------|---------------------------------|----------------------------------------------------|
 | `POST` | `/{scanId}?format=PDF`          | Generate a report — formats: `PDF`, `HTML`, `DOCX` |
+| `GET`  | `/{scanId}/formats`             | List already-generated formats cached for a scan   |
 | `GET`  | `/{scanId}/download?format=PDF` | Download the generated report file                 |
 
 ---
@@ -210,6 +323,7 @@ minutes for image pulls.
 3. Login       POST  /api/v1/auth/login     →  copy the accessToken
 4. Scan        POST  /api/v1/scan/submit        Authorization: Bearer <token>
 5. Poll        GET   /api/v1/scan/{scanId}/status   (until FINISHED)
+6. Generate    POST  /api/v1/report/{scanId}?format=PDF
 7. Download    GET   /api/v1/report/{scanId}/download?format=PDF
 ```
 
@@ -229,7 +343,7 @@ HTTP request files for IntelliJ / VS Code are in `/http-requests/`.
 
 ---
 
-### Project Structure
+## Project Structure
 
 ```
 Sentinel/
