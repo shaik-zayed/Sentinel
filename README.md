@@ -133,7 +133,6 @@ GET  /api/v1/scan/user/{userId}     Get all scans for a user
 **Reports**
 
 ```
-POST /api/v1/report/generate/{scanId}?format=PDF    Generate report
 GET  /api/v1/report/download/{scanId}?format=PDF    Download report
 ```
 
@@ -152,8 +151,8 @@ GET  /api/v1/report/download/{scanId}?format=PDF    Download report
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/sentinel.git
-cd sentinel
+git clone https://github.com/shaik-zayed/Sentinel.git
+cd Sentinel
 ```
 
 **2. Configure environment**
