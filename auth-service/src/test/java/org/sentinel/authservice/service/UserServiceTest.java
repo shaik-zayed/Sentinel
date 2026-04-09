@@ -46,12 +46,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        registerRequest = RegisterRequest.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
-                .password("Password123!")
-                .build();
+        registerRequest = new RegisterRequest("John", "Doe", "john.doe@example.com", "Password123!");
     }
 
     @Nested
