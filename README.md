@@ -3,9 +3,17 @@
 A distributed, microservices-based vulnerability assessment platform that allows security professionals and developers
 to run Nmap network scans, manage results, and generate detailed reports all through a secure, authenticated REST API.
 
+
+![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=flat-square)
+![Kafka](https://img.shields.io/badge/Kafka-KRaft-231F20?style=flat-square)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square)
+![MinIO](https://img.shields.io/badge/MinIO-S3-C72E49?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 ---
 
-### What it does
+### Overview
 
 Users register, verify their email, and log in. Once authenticated, they configure a network scan choosing the target,
 scan type, port range, OS detection, and service version detection. The scan request is submitted through the API
