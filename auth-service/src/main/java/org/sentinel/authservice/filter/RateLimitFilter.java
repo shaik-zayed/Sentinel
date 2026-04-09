@@ -33,14 +33,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String clientIP = getClientIP(request);
         String path = request.getRequestURI();
 
-        // Apply stricter rate limiting to login endpoint
-        if (path.contains("/api/v1/auth/login")) {
-            if (isLoginRateLimitExceeded(clientIP)) {
+        // Apply stricter rate limiting to log in endpoint
+        if (path.contains("/api/v1/auth/login") && isLoginRateLimitExceeded(clientIP)) {
                 log.warn("Login rate limit exceeded for IP: {}", clientIP);
                 sendRateLimitResponse(response, "Too many login attempts. Please try again later.");
                 return;
             }
-        }
 
         // General rate limiting for all endpoints
         if (isGeneralRateLimitExceeded(clientIP)) {

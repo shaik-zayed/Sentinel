@@ -1,0 +1,87 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#000000",
+    "primaryBorderColor": "#000000",
+    "lineColor": "#000000",
+    "textColor": "#000000",
+    "actorBkg": "#ffffff",
+    "actorBorder": "#000000",
+    "actorTextColor": "#000000",
+    "noteBkg": "#ffffff",
+    "noteBorderColor": "#000000"
+  },
+  "themeCSS": ".mermaid { background-color: #ffffff !important; }"
+}}%%
+
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant G as API Gateway
+    participant A as Auth Service
+    participant S as Scan Service
+    participant K as Kafka
+    participant N as Nmap Service
+    participant D as Docker
+    participant DB as MySQL
+    participant R as Report Service
+    participant M as MinIO
+
+%% -------- PHASE 1 --------
+    rect rgb(255,255,255)
+        Note over C,M: 🔐 Phase 1: Authentication & Scan Submission
+        C ->> G: POST /auth/login
+        G ->> A: Forward login request
+        A ->> DB: Validate credentials
+        DB -->> A: User found
+        A -->> G: Access + Refresh tokens
+        G -->> C: Tokens
+
+        C ->> G: POST /scan/submit (JWT)
+        G ->> G: Validate token
+        G ->> S: Forward scan request + userId
+        S ->> DB: Insert scan (status=ACCEPTED)
+        DB -->> S: scanId
+        S ->> K: Publish ScanCommand (correlationId)
+        S -->> C: 202 Accepted (scanId)
+    end
+
+%% -------- PHASE 2 --------
+    rect rgb(245,245,245)
+        Note over C,M: ⚙️ Phase 2: Asynchronous Scan Execution
+        K ->> N: Deliver ScanCommand
+        N ->> D: Create & start nmap container
+        D -->> N: Container ready
+        N ->> N: Execute nmap command
+        D -->> N: Scan output (stdout/stderr)
+        N ->> K: Publish ScanResult (output)
+        K ->> S: Deliver ScanResult
+        S ->> DB: Update scan (status=FINISHED, output)
+    end
+
+%% -------- PHASE 3 --------
+    rect rgb(255,255,255)
+        Note over C,M: 📄 Phase 3: Report Generation
+        C ->> G: POST /report/{scanId}?format=pdf
+        G ->> G: Validate token
+        G ->> R: Forward report request + userId
+        R ->> S: GET /scan/{scanId}/result (userId header)
+        S ->> DB: Fetch scan output
+        DB -->> S: scan output (XML)
+        S -->> R: ScanResultResponse (output)
+        R ->> R: Parse XML -> ReportData
+        R ->> R: Generate PDF/HTML/DOCX
+        R ->> M: Upload report object
+        M -->> R: Upload success
+        R -->> G: Presigned URL or download link
+        G -->> C: Report ready (download URL)
+
+        C ->> G: GET /report/{scanId}/download?format=pdf
+        G ->> R: Forward download request
+        R ->> M: Download report bytes
+        M -->> R: File content
+        R -->> G: Report bytes
+        G -->> C: PDF/HTML/DOCX file
+    end

@@ -174,7 +174,7 @@ public class AuthService {
     }
 
     /**
-     * ✅ COMPLETELY REWRITTEN - Now uses database-backed refresh tokens with rotation
+     * Uses database-backed refresh tokens with rotation
      */
     @Transactional
     public AuthResponse refreshAccessToken(String refreshTokenString, HttpServletRequest httpRequest) {
@@ -184,18 +184,18 @@ public class AuthService {
             throw new InvalidTokenException("Refresh token is required");
         }
 
-        // ✅ Step 1: Validate token type (JWT structure)
+        // Validate token type (JWT structure)
         if (!jwtUtil.isRefreshToken(refreshTokenString)) {
             log.warn("Attempted to use access token for refresh from IP: {}", getClientIP(httpRequest));
             throw new InvalidTokenException("Invalid token type. Refresh token required.");
         }
 
         try {
-            // ✅ Step 2: Validate against database and check for security issues
+            // Validate against database and check for security issues
             RefreshToken oldToken = refreshTokenService.validateAndGetRefreshToken(refreshTokenString);
             User user = oldToken.getUser();
 
-            // ✅ Step 3: Additional security checks on user account
+            // Additional security checks on user account
             if (!user.isActive()) {
                 log.warn("Refresh attempt for inactive user: {}", user.getUserId());
                 throw new InvalidTokenException("Account is no longer active");
@@ -211,14 +211,14 @@ public class AuthService {
                 throw new InvalidTokenException("Account is locked");
             }
 
-            // ✅ Step 4: Rotate the refresh token (revoke old, create new in same family)
+            // Rotate the refresh token (revoke old, create new in same family)
             String newRefreshTokenString = refreshTokenService.rotateRefreshToken(oldToken, httpRequest);
 
-            // ✅ Step 5: Generate new access token
+            // Generate new access token
             UserDetails userDetails = new CustomUserDetails(user);
             String newAccessToken = jwtUtil.generateAccessToken(userDetails);
 
-            // ✅ Step 6: Log the refresh operation
+            // Log the refresh operation
             auditService.logAction(
                     user.getUserId(),
                     "TOKEN_REFRESH",
@@ -231,7 +231,7 @@ public class AuthService {
             log.info("Token refreshed successfully for user: {}, family: {}",
                     user.getUserId(), oldToken.getTokenFamilyId());
 
-            // ✅ Step 7: Return new token pair
+            // Return new token pair
             return AuthResponse.builder()
                     .accessToken(newAccessToken)
                     .refreshToken(newRefreshTokenString)
@@ -242,10 +242,10 @@ public class AuthService {
                     .build();
 
         } catch (InvalidTokenException e) {
-            // ✅ Specific token validation errors - already logged in RefreshTokenService
+            // Specific token validation errors - already logged in RefreshTokenService
             throw e;
         } catch (SecurityException e) {
-            // ✅ Token reuse detected - entire family already revoked in RefreshTokenService
+            // Token reuse detected - entire family already revoked in RefreshTokenService
             log.error("SECURITY ALERT: Token reuse detected from IP: {}", getClientIP(httpRequest));
             throw new InvalidTokenException("Security violation detected. All related sessions have been terminated.");
         } catch (Exception ex) {

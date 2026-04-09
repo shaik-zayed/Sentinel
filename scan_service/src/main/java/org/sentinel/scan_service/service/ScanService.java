@@ -2,7 +2,6 @@ package org.sentinel.scan_service.service;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import jakarta.transaction.Transactional;
 import org.sentinel.scan_service.dto.ScanMapper;
 import org.sentinel.scan_service.dto.ScanResponse;
 import org.sentinel.scan_service.dto.ScanSubmissionResponse;
@@ -15,6 +14,7 @@ import org.sentinel.scan_service.repo.ScanItemRepository;
 import org.sentinel.scan_service.repo.ScanRequestRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;

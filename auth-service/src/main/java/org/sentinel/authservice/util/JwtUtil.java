@@ -164,6 +164,10 @@ public class JwtUtil {
      * Checks username match and expiration
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+
         try {
             final String username = extractUsername(token);
             boolean isUsernameValid = username.equals(userDetails.getUsername());

@@ -48,7 +48,7 @@ application:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      secret-key: ${JWT_SECRET_KEY}
       access-token:
         expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000} # 15 minutes (reduced to 15 minutes from 1 hour)
       refresh-token:

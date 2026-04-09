@@ -83,9 +83,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Logout from all devices
-     */
     @PostMapping("/logout-all-devices")
     @Operation(summary = "Logout from all devices", description = "Revokes all refresh tokens for the user. " + "The user will need to login again on all devices.")
     public ResponseEntity<Map<String, String>> logoutAllDevices(@RequestHeader("Authorization") String authHeader, HttpServletRequest httpRequest) {
@@ -143,9 +140,7 @@ public class AuthController {
         ));
     }
 
-    /**
-     * ✅ IMPROVED: Extract token with better error handling
-     */
+
     private String extractTokenFromHeader(String authHeader) {
         if (authHeader == null || authHeader.isBlank()) {
             throw new IllegalArgumentException("Authorization header is required");

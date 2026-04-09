@@ -1,16 +1,4 @@
-# =============================================================================
-# .dockerignore — controls what is sent to the Docker build daemon
-#
-# The build context is the entire repo root (docker compose sends everything
-# in . to the daemon unless listed here). Excluding unnecessary files:
-#   • Reduces build context size (faster uploads to the daemon)
-#   • Prevents secrets (.env) from being baked into layers
-#   • Prevents stale build artefacts from invalidating the COPY . . cache hit
-# =============================================================================
 
-# ---------------------------------------------------------------------------
-# Secrets — must never enter the build context
-# ---------------------------------------------------------------------------
 .env
 .env.*
 *.secret
@@ -47,9 +35,6 @@ Thumbs.db
 
 # ---------------------------------------------------------------------------
 # Maven build output
-# Prevents compiled classes from invalidating the COPY . . layer in Stage 2
-# (builder). If target/ exists locally, Docker would otherwise pick it up
-# and the mvn clean in Stage 2 would spend time cleaning it anyway.
 # ---------------------------------------------------------------------------
 **/target/
 !**/src/
