@@ -130,8 +130,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = ErrorResponse.builder()
                 .timeStamp(OffsetDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-//                .message("An unexpected error occurred")
-                .message(ex.getMessage())
+                .message("An unexpected error occurred")
                 .path(request.getRequestURI())
 
                 .build();

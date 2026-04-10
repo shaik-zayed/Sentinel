@@ -255,7 +255,6 @@ Sentinel/
 - Limited automated test coverage — manual testing via HTTP files
 - Single Kafka broker with replication factor 1 — not production-grade for high availability
 - Docker socket mount required for Nmap containers — review security implications before deploying to production
-- JWT key rotation not yet implemented
 - Prometheus / Grafana metrics integration stubbed but not enabled
 
 ---

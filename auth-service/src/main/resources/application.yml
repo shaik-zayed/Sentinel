@@ -43,6 +43,11 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite = 15m
+
 application:
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}

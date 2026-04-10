@@ -7,7 +7,8 @@ import org.sentinel.authservice.exceptions.TokenBlacklistException;
 import org.sentinel.authservice.model.TokenBlacklist;
 import org.sentinel.authservice.repository.TokenBlacklistRepository;
 import org.sentinel.authservice.util.JwtUtil;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,19 +31,17 @@ public class TokenBlacklistService {
 
     private final TokenBlacklistRepository blacklistRepository;
     private final JwtUtil jwtUtil;
+    private final CacheManager cacheManager;
 
     /**
      * Blacklist an access token (on logout or revocation)
      */
     @Transactional
-    @CacheEvict(value = "tokenBlacklist", key = "#result")
     public void blacklistToken(String token, UUID userId, String reason) {
         try {
-            // Extract JWT ID and expiration
             String jti = jwtUtil.extractClaim(token, Claims::getId);
             Instant expiresAt = jwtUtil.extractExpirationAsInstantTime(token);
 
-            // Check if already blacklisted
             if (blacklistRepository.existsByTokenJti(jti)) {
                 log.debug("Token already blacklisted: {}", jti);
                 return;
@@ -57,6 +56,12 @@ public class TokenBlacklistService {
 
             blacklistRepository.save(blacklistedToken);
 
+            // Evicts only this specific JTI from cache so that future checks hit the DB
+            Cache cache = cacheManager.getCache("tokenBlacklist");
+            if (cache != null) {
+                cache.evict(jti);
+            }
+
             log.info("Blacklisted access token - JTI: {}, User: {}, Reason: {}", jti, userId, reason);
 
         } catch (Exception e) {
@@ -66,7 +71,7 @@ public class TokenBlacklistService {
     }
 
     /**
-     * Check if token JTI is blacklisted (with caching)
+     * Checks if token JTI is blacklisted (with caching)
      */
     @Cacheable(value = "tokenBlacklist", key = "#jti", unless = "#result == false")
     public boolean isTokenBlacklisted(String jti) {
@@ -74,7 +79,7 @@ public class TokenBlacklistService {
     }
 
     /**
-     * Check if token is blacklisted by extracting JTI from token
+     * Checks if token is blacklisted by extracting JTI from token
      */
     public boolean isTokenBlacklistedByToken(String token) {
         try {
@@ -82,8 +87,6 @@ public class TokenBlacklistService {
             return isTokenBlacklisted(jti);
         } catch (Exception e) {
             log.warn("Error checking blacklist for token: {}", e.getMessage());
-            // Fail securely - if we can't extract JTI, we can't confirm blacklist status
-            // Return false to allow JWT validation to handle the invalid token
             return false;
         }
     }
@@ -94,15 +97,21 @@ public class TokenBlacklistService {
      */
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
-    @CacheEvict(value = "tokenBlacklist", allEntries = true)
     public void cleanupExpiredBlacklist() {
         Instant now = Instant.now();
         int deleted = blacklistRepository.deleteExpiredTokens(now);
-        log.info("Cleaned up {} expired blacklist entries", deleted);
+
+        // Clear entire cache after DB cleanup to remove all expired entries
+        Cache cache = cacheManager.getCache("tokenBlacklist");
+        if (cache != null) {
+            cache.clear();
+        }
+
+        log.info("Cleaned up {} expired blacklist entries and cleared cache", deleted);
     }
 
     /**
-     * Get blacklist statistics for a user (useful for admin dashboard)
+     * Gets blacklist statistics for a user (useful for admin dashboard for later usage)
      */
     @Transactional(readOnly = true)
     public long getBlacklistCountForUser(UUID userId) {

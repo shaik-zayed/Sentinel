@@ -38,23 +38,23 @@ public class ReportGenerationController {
      * "contentType": "application/pdf"
      * }
      */
-    @PostMapping("/{scanId}")
-    public ResponseEntity<ReportResponse> generateReport(
-            @PathVariable UUID scanId,
-            @RequestParam String format,
-            @RequestHeader("X-User-Id") String userId) {
-
-        ReportFormat reportFormat = parseFormat(format);
-
-        log.info("Report requested. scanId={}, format={}, userId={}", scanId, reportFormat, userId);
-
-        ReportResponse response = orchestrator.getOrGenerate(scanId, reportFormat, userId);
-
-        log.info("Report ready. scanId={}, format={}, cached={}", scanId, reportFormat,
-                response.getDownloadUrl() != null);
-
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping("/{scanId}")
+//    public ResponseEntity<ReportResponse> generateReport(
+//            @PathVariable UUID scanId,
+//            @RequestParam String format,
+//            @RequestHeader("X-User-Id") String userId) {
+//
+//        ReportFormat reportFormat = parseFormat(format);
+//
+//        log.info("Report requested. scanId={}, format={}, userId={}", scanId, reportFormat, userId);
+//
+//        ReportResponse response = orchestrator.getOrGenerate(scanId, reportFormat, userId);
+//
+//        log.info("Report ready. scanId={}, format={}, cached={}", scanId, reportFormat,
+//                response.getDownloadUrl() != null);
+//
+//        return ResponseEntity.ok(response);
+//    }
 
     /**
      * List which formats are already cached in MinIO for this scan.
