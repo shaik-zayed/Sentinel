@@ -21,11 +21,11 @@
     </properties>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>org.springdoc</groupId>-->
-<!--            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
-<!--            <version>3.0.2</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springdoc</groupId>-->
+        <!--            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+        <!--            <version>3.0.2</version>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -34,8 +34,8 @@
     </dependencies>
 
     <modules>
-        <module>scan_service</module>
-        <module>nmap_service</module>
+        <module>scan-service</module>
+        <module>nmap-service</module>
         <module>auth-service</module>
         <module>api-gateway</module>
         <module>eureka-server</module>

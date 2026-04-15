@@ -7,9 +7,9 @@ COPY pom.xml .
 COPY api-gateway/pom.xml    api-gateway/
 COPY auth-service/pom.xml   auth-service/
 COPY eureka-server/pom.xml  eureka-server/
-COPY nmap_service/pom.xml   nmap_service/
+COPY nmap-service/pom.xml   nmap-service/
 COPY report-service/pom.xml report-service/
-COPY scan_service/pom.xml   scan_service/
+COPY scan-service/pom.xml   scan-service/
 
 
 RUN mvn dependency:go-offline -B -q
