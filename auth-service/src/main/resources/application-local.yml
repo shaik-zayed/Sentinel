@@ -1,0 +1,91 @@
+server:
+  port: 8083
+  shutdown: graceful
+
+spring:
+  application:
+    name: auth-service
+  main:
+    banner-mode: off
+  datasource:
+    #    url: jdbc:mysql://localhost:3306/mydb
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/mydb}
+    username: ${DB_USERNAME:sentinel}
+    password: ${DB_PASSWORD:sentinel}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            required: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+        debug: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite = 15m
+
+application:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      access-token:
+        expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000} # 15 minutes (reduced to 15 minutes from 1 hour)
+      refresh-token:
+        expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000} # 7 days
+  email:
+    from: ${EMAIL_FROM:noreply@sentinel.local}
+    verification-url: ${EMAIL_VERIFICATION_URL:http://localhost:3000/verify-email}
+    password-reset-url: ${EMAIL_PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true

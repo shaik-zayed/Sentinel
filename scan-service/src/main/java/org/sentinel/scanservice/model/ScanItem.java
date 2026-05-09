@@ -16,7 +16,8 @@ import java.util.UUID;
 @Table(name = "scan_item", indexes = {
         @Index(name = "idx_correlation_id", columnList = "correlationId"),
         @Index(name = "idx_user_status", columnList = "userId, scanStatus"),
-        @Index(name = "idx_completed_at", columnList = "completedAt")
+        @Index(name = "idx_completed_at", columnList = "completedAt"),
+        @Index(name = "idx_enrichment_status", columnList = "enrichmentStatus")
 })
 @Data
 @Builder
@@ -50,6 +51,11 @@ public class ScanItem {
     @Column(nullable = false)
     private ScanStatus scanStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private EnrichmentStatus enrichmentStatus = EnrichmentStatus.PENDING;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -80,7 +86,9 @@ public class ScanItem {
     }
 
     public boolean isInProgress() {
-        return scanStatus == ScanStatus.QUEUED ||
+        return scanStatus == ScanStatus.ACCEPTED ||
+                scanStatus == ScanStatus.QUEUED ||
+                scanStatus == ScanStatus.STARTED ||
                 scanStatus == ScanStatus.PENDING;
     }
 

@@ -21,11 +21,11 @@ import java.util.Optional;
 public class KafkaScanResultConsumer {
 
     private final ScanItemRepository scanItemRepository;
+    private final AsyncEnrichmentExecutor asyncEnrichmentExecutor;
 
     @KafkaListener(
             topics = "${topics.input-name}",
-            groupId = "${spring.kafka.consumer.group-id}",
-            containerFactory = "kafkaListenerContainerFactory"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
     public void consumeScanResult(
@@ -54,6 +54,12 @@ public class KafkaScanResultConsumer {
                                 "ScanItem UserId: {}, Message UserId: {}. CorrelationId: {}. " +
                                 "Possible data corruption or security breach!",
                         scanItem.getUserId(), message.getUserId(), message.getCorrelationId());
+                return;
+            }
+
+            if (scanItem.getScanStatus() == ScanStatus.CANCELLED) {
+                log.info("Result received for cancelled scan: {}. Ignoring — expected behaviour.",
+                        message.getCorrelationId());
                 return;
             }
 
@@ -94,6 +100,10 @@ public class KafkaScanResultConsumer {
             scanItemRepository.save(scanItem);
             log.info("Scan item updated in database. CorrelationId: {}, Status: {}",
                     message.getCorrelationId(), scanItem.getScanStatus());
+
+            if (message.isSuccess() && message.getScanOutput() != null) {
+                asyncEnrichmentExecutor.enrich(scanItem.getScanItemId(), message.getScanOutput());
+            }
 
         } catch (Exception e) {
             log.error("Error processing scan result. CorrelationId: {}, Error: {}",

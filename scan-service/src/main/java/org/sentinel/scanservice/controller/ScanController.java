@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sentinel.scanservice.dto.ScanResponse;
 import org.sentinel.scanservice.dto.ScanSubmissionResponse;
+import org.sentinel.scanservice.model.FindingsResponse;
 import org.sentinel.scanservice.model.ScanRequest;
+import org.sentinel.scanservice.service.FindingService;
 import org.sentinel.scanservice.service.ScanService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class ScanController {
 
     private final ScanService scanService;
+    private final FindingService findingService;
 
     @PostMapping("/submit")
     public ResponseEntity<ScanSubmissionResponse> submitScan(
@@ -76,14 +79,30 @@ public class ScanController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{scanId}/findings")
+    public ResponseEntity<FindingsResponse> getScanFindings(
+            @PathVariable UUID scanId,
+            @RequestHeader(value = "X-User-Id") String userIdHeader) {
+
+        UUID userId = UUID.fromString(userIdHeader);
+        FindingsResponse response = findingService.getFindings(scanId, userId);
+        boolean isSettled = switch (response.enrichmentStatus()) {
+            case "COMPLETED", "NOT_APPLICABLE", "FAILED", "PARTIAL" -> true;
+            default -> false;
+        };
+
+        HttpStatus status = isSettled ? HttpStatus.OK : HttpStatus.ACCEPTED;
+        return ResponseEntity.status(status).body(response);
+    }
+
     @GetMapping("/list")
     public ResponseEntity<List<ScanResponse>> listUserScans(
             @RequestHeader(value = "X-User-Id") String userIdHeader,
             @RequestParam(defaultValue = "20") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "0") int page) {
 
         UUID userId = UUID.fromString(userIdHeader);
-        List<ScanResponse> response = scanService.getUserScans(userId, limit, offset);
+        List<ScanResponse> response = scanService.getUserScans(userId, limit, page);
         return ResponseEntity.ok(response);
     }
 

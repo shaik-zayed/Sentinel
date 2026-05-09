@@ -1,5 +1,6 @@
 package org.sentinel.reportservice.client;
 
+import org.sentinel.reportservice.dto.CveFindingsResponse;
 import org.sentinel.reportservice.dto.ScanResultResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,7 +12,7 @@ import java.util.UUID;
 /**
  * Declarative HTTP client for scan-service.
  * Backed by RestClient + Spring Cloud LoadBalancer (Eureka).
- *
+ * <p>
  * Maps to scan-service's GET /api/v1/scan/{scanId}/result endpoint.
  * That endpoint returns the raw nmap XML in ScanResponse.scanOutput,
  * but only when the scan status is FINISHED.
@@ -24,6 +25,12 @@ public interface ScanClient {
 
     @GetExchange("/{scanId}/result")
     ScanResultResponse getScanResult(
+            @PathVariable UUID scanId,
+            @RequestHeader("X-User-Id") String userId
+    );
+
+    @GetExchange("/{scanId}/findings")
+    CveFindingsResponse getFindings(
             @PathVariable UUID scanId,
             @RequestHeader("X-User-Id") String userId
     );

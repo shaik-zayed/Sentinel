@@ -6,5 +6,6 @@ public enum ScanStatus {
     STARTED,
     PENDING,
     FINISHED,
-    FAILED
+    FAILED,
+    CANCELLED
 }

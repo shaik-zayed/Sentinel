@@ -90,7 +90,7 @@ public class KafkaConfig {
                 .name(outputTopic)
                 .partitions(3)
                 .replicas(1)
-                .compact()
+//                .compact()
                 .build();
     }
 
@@ -100,7 +100,7 @@ public class KafkaConfig {
                 .name(inputTopic)
                 .partitions(3)
                 .replicas(1)
-                .compact()
+//                .compact()
                 .build();
     }
 }

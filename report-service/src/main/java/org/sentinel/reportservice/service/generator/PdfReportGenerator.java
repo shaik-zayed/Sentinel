@@ -11,6 +11,7 @@ import com.itextpdf.layout.element.*;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import lombok.extern.slf4j.Slf4j;
+import org.sentinel.reportservice.dto.CveFinding;
 import org.sentinel.reportservice.dto.ReportData;
 import org.springframework.stereotype.Component;
 
@@ -26,12 +27,12 @@ import java.util.List;
 public class PdfReportGenerator {
 
     // Colours matching the dark theme but readable on white paper
-    private static final DeviceRgb HEADING_BLUE   = new DeviceRgb(33,  97, 140);
-    private static final DeviceRgb ACCENT_GREEN   = new DeviceRgb(39, 174,  96);
-    private static final DeviceRgb ACCENT_RED     = new DeviceRgb(192,  57,  43);
-    private static final DeviceRgb LABEL_GREY     = new DeviceRgb(108, 117, 125);
-    private static final DeviceRgb TABLE_HEADER   = new DeviceRgb(52,  73,  94);
-    private static final DeviceRgb TABLE_ROW_ALT  = new DeviceRgb(245, 248, 250);
+    private static final DeviceRgb HEADING_BLUE = new DeviceRgb(33, 97, 140);
+    private static final DeviceRgb ACCENT_GREEN = new DeviceRgb(39, 174, 96);
+    private static final DeviceRgb ACCENT_RED = new DeviceRgb(192, 57, 43);
+    private static final DeviceRgb LABEL_GREY = new DeviceRgb(108, 117, 125);
+    private static final DeviceRgb TABLE_HEADER = new DeviceRgb(52, 73, 94);
+    private static final DeviceRgb TABLE_ROW_ALT = new DeviceRgb(245, 248, 250);
 
     public byte[] generate(ReportData data) {
         try {
@@ -40,9 +41,9 @@ public class PdfReportGenerator {
             PdfDocument pdf = new PdfDocument(writer);
             Document doc = new Document(pdf);
 
-            PdfFont regular  = PdfFontFactory.createFont("Helvetica");
-            PdfFont bold     = PdfFontFactory.createFont("Helvetica-Bold");
-            PdfFont mono     = PdfFontFactory.createFont("Courier");
+            PdfFont regular = PdfFontFactory.createFont("Helvetica");
+            PdfFont bold = PdfFontFactory.createFont("Helvetica-Bold");
+            PdfFont mono = PdfFontFactory.createFont("Courier");
 
             // ---- Title ----
             doc.add(new Paragraph("Sentinel Scan Report")
@@ -58,11 +59,11 @@ public class PdfReportGenerator {
             addSectionHeading(doc, bold, "Scan Metadata");
             Table metaTable = new Table(UnitValue.createPercentArray(new float[]{2, 3}))
                     .useAllAvailableWidth().setMarginBottom(16);
-            addMetaRow(metaTable, regular, bold, "Started",       data.getScanStarted());
-            addMetaRow(metaTable, regular, bold, "Finished",      data.getScanFinished());
+            addMetaRow(metaTable, regular, bold, "Started", data.getScanStarted());
+            addMetaRow(metaTable, regular, bold, "Finished", data.getScanFinished());
             addMetaRow(metaTable, regular, bold, "Duration",
                     data.getElapsedSeconds() != null ? data.getElapsedSeconds() + " seconds" : null);
-            addMetaRow(metaTable, regular, bold, "Nmap Version",  data.getNmapVersion());
+            addMetaRow(metaTable, regular, bold, "Nmap Version", data.getNmapVersion());
             doc.add(metaTable);
 
             if (data.getNmapArgs() != null) {
@@ -79,8 +80,8 @@ public class PdfReportGenerator {
                         .useAllAvailableWidth().setMarginBottom(16);
                 addMetaRow(hostTable, regular, bold, "State",
                         hi.getState(), "up".equals(hi.getState()) ? ACCENT_GREEN : ACCENT_RED);
-                addMetaRow(hostTable, regular, bold, "Reason",     hi.getReason());
-                addMetaRow(hostTable, regular, bold, "Hosts Up",   String.valueOf(hi.getHostsUp()));
+                addMetaRow(hostTable, regular, bold, "Reason", hi.getReason());
+                addMetaRow(hostTable, regular, bold, "Hosts Up", String.valueOf(hi.getHostsUp()));
                 addMetaRow(hostTable, regular, bold, "Hosts Down", String.valueOf(hi.getHostsDown()));
                 if (hi.getAddresses() != null && !hi.getAddresses().isEmpty()) {
                     addMetaRow(hostTable, regular, bold, "Addresses",
@@ -121,11 +122,11 @@ public class PdfReportGenerator {
                     String portLabel = p.getPortId()
                             + (p.isTlsEnabled() ? " (TLS)" : "");
 
-                    addPortCell(portTable, bold,   portLabel,          bg, ACCENT_GREEN);
-                    addPortCell(portTable, regular, p.getProtocol(),    bg, null);
+                    addPortCell(portTable, bold, portLabel, bg, ACCENT_GREEN);
+                    addPortCell(portTable, regular, p.getProtocol(), bg, null);
                     addPortCell(portTable, regular, p.getServiceName(), bg, null);
-                    addPortCell(portTable, regular, pv.trim(),          bg, null);
-                    addPortCell(portTable, mono,    cpe,                bg, LABEL_GREY);
+                    addPortCell(portTable, regular, pv.trim(), bg, null);
+                    addPortCell(portTable, mono, cpe, bg, LABEL_GREY);
                 }
                 doc.add(portTable);
 
@@ -148,6 +149,42 @@ public class PdfReportGenerator {
                         }
                     }
                 }
+            }
+
+// ── CVE Findings ─────────────────────────────────────────────────────
+            List<CveFinding> findings = data.getCveFindings();
+            if (findings != null && !findings.isEmpty()) {
+                addSectionHeading(doc, bold, "CVE Findings (" + findings.size() + ")");
+                Table findingsTable = new Table(
+                        UnitValue.createPercentArray(new float[]{1, 1, 2, 1, 1, 1, 3}))
+                        .useAllAvailableWidth().setMarginBottom(16);
+
+                for (String h : new String[]{"Port", "Service", "Product/Version",
+                        "CVE ID", "CVSS", "Severity", "Description"}) {
+                    findingsTable.addHeaderCell(new Cell().add(new Paragraph(h)
+                                    .setFont(bold).setFontSize(8).setFontColor(ColorConstants.WHITE))
+                            .setBackgroundColor(TABLE_HEADER).setPadding(4));
+                }
+
+                boolean alt = false;
+                for (CveFinding f : findings) {
+                    DeviceRgb bg = alt ? TABLE_ROW_ALT : null;
+                    alt = !alt;
+
+                    String portStr = f.getPort() + " (" + f.getProtocol() + ")";
+                    String productVersion = join(" ", f.getProduct(), f.getVersion());
+
+                    addPortCell(findingsTable, regular, portStr, bg, null);
+                    addPortCell(findingsTable, regular, nullSafe(f.getServiceName()), bg, null);
+                    addPortCell(findingsTable, regular, productVersion, bg, null);
+                    addPortCell(findingsTable, mono, nullSafe(f.getCveId()), bg, LABEL_GREY);
+                    addPortCell(findingsTable, regular,
+                            f.getCvssScore() != null ? String.format("%.1f", f.getCvssScore()) : "—",
+                            bg, null);
+                    addPortCell(findingsTable, regular, nullSafe(f.getSeverity()), bg, null);
+                    addPortCell(findingsTable, regular, nullSafe(f.getDescription()), bg, null);
+                }
+                doc.add(findingsTable);
             }
 
             // ---- Footer ----

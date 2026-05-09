@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Sentinel-local" type="CompoundRunConfigurationType">
+    <toRun name="ApiGatewayApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="AuthServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="EurekaServerApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="NmapServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="ReportServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="ScanServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

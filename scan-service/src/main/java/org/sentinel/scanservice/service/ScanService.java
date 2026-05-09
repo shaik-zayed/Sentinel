@@ -101,9 +101,15 @@ public class ScanService {
         return scanMapper.toResultResponse(scanItem);
     }
 
-    public List<ScanResponse> getUserScans(UUID userId, int limit, int offset) {
-        List<ScanItem> scans = scanItemRepository.findByUserIdOrderByCreatedAtDesc(
-                userId, PageRequest.of(offset / limit, limit));
+    public List<ScanResponse> getUserScans(UUID userId, int limit, int page) {
+        if (limit < 1 || limit > 100) {
+            throw new BadRequestException("limit must be between 1 and 100");
+        }
+        if (page < 0) {
+            throw new BadRequestException("page must not be negative");
+        }
+
+        List<ScanItem> scans = scanItemRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, limit));
 
         return scans.stream()
                 .map(scanMapper::toSummaryResponse)
@@ -114,10 +120,8 @@ public class ScanService {
     public void deleteScan(UUID scanId, UUID userId) {
         ScanItem scanItem = getScanByIdWithAuthCheck(scanId, userId);
 
-        if (scanItem.getScanStatus() == ScanStatus.QUEUED ||
-                scanItem.getScanStatus() == ScanStatus.STARTED ||
-                scanItem.getScanStatus() == ScanStatus.PENDING) {
-            scanItem.setScanStatus(ScanStatus.FAILED);
+        if (scanItem.isInProgress()) {
+            scanItem.setScanStatus(ScanStatus.CANCELLED);
             scanItem.setErrorMessage("Cancelled by user");
             scanItemRepository.save(scanItem);
             log.info("Scan cancelled: {}", scanId);

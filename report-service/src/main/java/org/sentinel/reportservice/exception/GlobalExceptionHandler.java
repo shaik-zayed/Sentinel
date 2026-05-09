@@ -23,7 +23,19 @@ public class GlobalExceptionHandler {
     /** Scan exists but is not FINISHED yet (still running) */
     @ExceptionHandler(ScanNotCompleteException.class)
     public ResponseEntity<Map<String, Object>> handleNotComplete(ScanNotCompleteException e) {
-        return error(HttpStatus.CONFLICT, e.getMessage());
+        return error(HttpStatus.ACCEPTED, e.getMessage());  // 202, not 409
+    }
+
+    /** Enrichment still in progress – client should retry later */
+    @ExceptionHandler(EnrichmentPendingException.class)
+    public ResponseEntity<Map<String, Object>> handleEnrichmentPending(EnrichmentPendingException e) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                "status",           202,
+                "error",            "Enrichment in progress",
+                "message",          e.getMessage(),
+                "enrichmentStatus", e.getEnrichmentStatus(),
+                "timestamp",        Instant.now().toString()
+        ));
     }
 
     /** Bad format parameter */

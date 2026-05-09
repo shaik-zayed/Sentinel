@@ -25,6 +25,7 @@ public class ReportData {
 
     private HostInfo hostInfo;
     private List<PortInfo> openPorts;
+    private List<CveFinding> cveFindings;
 
     @Data
     @Builder

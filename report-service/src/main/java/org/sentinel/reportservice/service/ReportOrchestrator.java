@@ -3,9 +3,11 @@ package org.sentinel.reportservice.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sentinel.reportservice.client.ScanClient;
+import org.sentinel.reportservice.dto.CveFindingsResponse;
 import org.sentinel.reportservice.dto.ReportData;
 import org.sentinel.reportservice.dto.ReportResponse;
 import org.sentinel.reportservice.dto.ScanResultResponse;
+import org.sentinel.reportservice.exception.EnrichmentPendingException;
 import org.sentinel.reportservice.exception.ScanNotCompleteException;
 import org.sentinel.reportservice.exception.ScanNotFoundException;
 import org.sentinel.reportservice.model.ReportFormat;
@@ -25,15 +27,13 @@ import java.util.UUID;
 /**
  * Orchestrates the full report generation lifecycle:
  * <p>
- * 1. Check MinIO — if the report is already cached, return the URL immediately.
- * 2. Fetch the nmap XML from scan-service via @HttpExchange (one HTTP call).
- * 3. Parse the XML into a NmapRun, map to ReportData.
- * 4. Delegate to the appropriate generator.
- * 5. Upload the result to MinIO.
- * 6. Return a pre-signed download URL.
- * <p>
- * All steps are synchronous. Report generation from XML takes < 1 second
- * for all four formats, making async unnecessary here.
+ * 1. Fetch enrichment status – if not settled, refuse to serve/generate.
+ * 2. Check MinIO cache – only if enrichment was settled when originally created.
+ * 3. Fetch nmap XML from scan-service.
+ * 4. Parse + map into ReportData (attach CVE findings).
+ * 5. Delegate to the appropriate report generator.
+ * 6. Upload result to MinIO.
+ * 7. Return download URL.
  */
 @Slf4j
 @Service
@@ -57,26 +57,32 @@ public class ReportOrchestrator {
 
     /**
      * Main entry point.
-     * Returns a ReportResponse with a pre-signed download URL.
-     *
-     * @param scanId the scan to report on
-     * @param format requested output format
-     * @param userId the authenticated user (forwarded to scan-service)
+     * Throws {@link EnrichmentPendingException} if enrichment is not yet settled,
+     * giving the client a 202 Accepted and the current enrichment status.
      */
     public ReportResponse getOrGenerate(UUID scanId, ReportFormat format, String userId) {
         String objectPath = format.objectPath(scanId.toString());
 
-        // ── Step 1: Cache hit ─────────────────────────────────────────────
+        // ── Step 1: Check enrichment status BEFORE the cache hit ───────────
+        CveFindingsResponse findingsResponse = fetchFindings(scanId, userId);
+        String enrichmentStatus = findingsResponse != null
+                ? findingsResponse.getEnrichmentStatus() : null;
+
+        if (!isEnrichmentSettled(enrichmentStatus)) {
+            throw new EnrichmentPendingException(enrichmentStatus);
+        }
+
+        // ── Step 2: Cache hit (valid only because enrichment was settled) ─
         if (minioStorage.exists(objectPath)) {
             log.info("Cache hit - returning existing report. scanId={}, format={}", scanId, format);
             return buildResponse(scanId, format, objectPath);
         }
 
-        // ── Step 2: Fetch XML from scan-service ───────────────────────────
+        // ── Step 3: Fetch nmap XML ───────────────────────────────────────
         log.info("Cache miss - generating report. scanId={}, format={}", scanId, format);
         ScanResultResponse scanResult = fetchScanResult(scanId, userId);
 
-        // ── Step 3: Parse + Map ───────────────────────────────────────────
+        // ── Step 4: Parse + Map ──────────────────────────────────────────
         NmapRun nmapRun;
         try {
             nmapRun = nmapParseService.parse(scanResult.getScanOutput());
@@ -86,15 +92,23 @@ public class ReportOrchestrator {
         }
         ReportData reportData = reportDataMapper.map(scanId, nmapRun);
 
-        // ── Step 4: Generate ──────────────────────────────────────────────
+        // Attach CVE findings – already fetched above, no extra HTTP call
+        if (findingsResponse != null
+                && findingsResponse.getFindings() != null
+                && !findingsResponse.getFindings().isEmpty()) {
+            reportData.setCveFindings(findingsResponse.getFindings());
+            log.info("Attached {} CVE findings to report for scanId={}",
+                    findingsResponse.getFindings().size(), scanId);
+        }
+
+        // ── Step 5: Generate ─────────────────────────────────────────────
         byte[] content = generate(format, reportData);
 
-        // ── Step 5: Upload to MinIO ───────────────────────────────────────
+        // ── Step 6: Upload to MinIO ─────────────────────────────────────
         minioStorage.upload(objectPath, content, format.contentType());
         log.info("Report stored in MinIO. scanId={}, format={}, size={} bytes",
                 scanId, format, content.length);
 
-        // ── Step 6: Return URL ────────────────────────────────────────────
         return buildResponse(scanId, format, objectPath);
     }
 
@@ -107,52 +121,71 @@ public class ReportOrchestrator {
             cached.put(fmt.name().toLowerCase(),
                     minioStorage.exists(fmt.objectPath(scanId.toString())));
         }
-
         return ReportResponse.builder()
                 .scanId(scanId)
                 .cachedFormats(cached)
                 .build();
     }
 
-    // -----------------------------------------------------------------------
-    // Private helpers
+    public byte[] getReportBytes(UUID scanId, ReportFormat format, String userId) {
+        String objectPath = format.objectPath(scanId.toString());
+        if (!minioStorage.exists(objectPath)) {
+            // getOrGenerate will throw if enrichment not settled
+            getOrGenerate(scanId, format, userId);
+        }
+        return minioStorage.download(objectPath);
+    }
+
     // -----------------------------------------------------------------------
 
     private ScanResultResponse fetchScanResult(UUID scanId, String userId) {
         try {
             ScanResultResponse result = scanClient.getScanResult(scanId, userId);
-
-            // scan-service returns scanOutput only when FINISHED
-            // (its getScanResult throws BadRequestException if not complete)
-            // This guard is a safety net in case that contract ever changes
             if (result.getScanOutput() == null || result.getScanOutput().isBlank()) {
                 throw new ScanNotCompleteException(
                         "Scan output is empty. Status: " + result.getStatus());
             }
-
             return result;
-
         } catch (HttpClientErrorException.NotFound e) {
             throw new ScanNotFoundException("Scan not found: " + scanId);
-
         } catch (HttpClientErrorException.Forbidden e) {
-            // Re-throw as-is - the controller will return 403
             throw e;
-
         } catch (HttpClientErrorException.BadRequest e) {
-            // scan-service throws 400 when the scan is not yet FINISHED
             throw new ScanNotCompleteException(
                     "Scan is not complete yet. " + e.getResponseBodyAsString());
-
         } catch (ScanNotFoundException | ScanNotCompleteException e) {
             throw e;
-
         } catch (Exception e) {
             log.error("Failed to fetch scan result from scan-service. scanId={}, error={}",
                     scanId, e.getMessage());
-            throw new RuntimeException(
-                    "Failed to retrieve scan data: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve scan data: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Fetches CVE findings from scan-service.
+     * Auth failures (403) are propagated; transient errors are swallowed.
+     */
+    private CveFindingsResponse fetchFindings(UUID scanId, String userId) {
+        try {
+            return scanClient.getFindings(scanId, userId);
+        } catch (HttpClientErrorException.Forbidden e) {
+            throw e; // Do not swallow auth failures
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new ScanNotFoundException("Scan not found: " + scanId);
+        } catch (Exception e) {
+            log.warn("Could not fetch CVE findings for scanId={}: {}. " +
+                    "Treating as enrichment not applicable.", scanId, e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isEnrichmentSettled(String status) {
+        if (status == null) return true; // couldn't fetch – allow generation without CVEs
+        return switch (status) {
+            case "COMPLETED", "PARTIAL", "FAILED", "NOT_APPLICABLE" -> true;
+            default -> false; // PENDING, IN_PROGRESS
+        };
     }
 
     private byte[] generate(ReportFormat format, ReportData data) {
@@ -164,25 +197,10 @@ public class ReportOrchestrator {
         };
     }
 
-//    private ReportResponse buildResponse(UUID scanId, ReportFormat format, String objectPath) {
-//        String url = minioStorage.generatePresignedUrl(objectPath);
-//        return ReportResponse.builder()
-//                .scanId(scanId)
-//                .format(format.name().toLowerCase())
-//                .status("READY")
-//                .downloadUrl(url)
-//                .expiresIn(urlExpiryMinutes + " minutes")
-//                .contentType(format.contentType())
-//                .build();
-//    }
-
-    //Workaround that makes the report to download through the report service.
     private ReportResponse buildResponse(UUID scanId, ReportFormat format, String objectPath) {
-        // Point to our own proxy endpoint, not MinIO directly
         String downloadUrl = downloadBaseUrl
                 + "/api/v1/report/" + scanId
                 + "/download?format=" + format.name().toLowerCase();
-
         return ReportResponse.builder()
                 .scanId(scanId)
                 .format(format.name().toLowerCase())
@@ -191,16 +209,5 @@ public class ReportOrchestrator {
                 .expiresIn("session")
                 .contentType(format.contentType())
                 .build();
-    }
-
-    public byte[] getReportBytes(UUID scanId, ReportFormat format, String userId) {
-        String objectPath = format.objectPath(scanId.toString());
-
-        // Generate if not cached yet
-        if (!minioStorage.exists(objectPath)) {
-            getOrGenerate(scanId, format, userId);
-        }
-
-        return minioStorage.download(objectPath);
     }
 }

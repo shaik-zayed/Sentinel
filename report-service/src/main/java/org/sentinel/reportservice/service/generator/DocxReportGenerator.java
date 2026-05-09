@@ -5,6 +5,7 @@ import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
+import org.sentinel.reportservice.dto.CveFinding;
 import org.sentinel.reportservice.dto.ReportData;
 import org.springframework.stereotype.Component;
 
@@ -116,6 +117,35 @@ public class DocxReportGenerator {
                             }
                         }
                     }
+                }
+            }
+
+            // ── CVE Findings ─────────────────────────────────────────────────────
+            List<CveFinding> findings = data.getCveFindings();
+            if (findings != null && !findings.isEmpty()) {
+                addSpacer(doc);
+                addHeading(doc, "CVE Findings (" + findings.size() + ")", 1);
+                XWPFTable cveTable = createTable(doc, 7);
+
+                XWPFTableRow header = cveTable.getRow(0);
+                setCell(header, 0, "Port", true);
+                setCell(header, 1, "Service", true);
+                setCell(header, 2, "Product/Version", true);
+                setCell(header, 3, "CVE ID", true);
+                setCell(header, 4, "CVSS", true);
+                setCell(header, 5, "Severity", true);
+                setCell(header, 6, "Description", true);
+
+                for (CveFinding f : findings) {
+                    XWPFTableRow row = cveTable.createRow();
+                    setCell(row, 0, f.getPort() + " (" + f.getProtocol() + ")", false);
+                    setCell(row, 1, nullSafe(f.getServiceName()), false);
+                    String pv = join(" ", f.getProduct(), f.getVersion());
+                    setCell(row, 2, pv, false);
+                    setCell(row, 3, nullSafe(f.getCveId()), false);
+                    setCell(row, 4, f.getCvssScore() != null ? String.format("%.1f", f.getCvssScore()) : "—", false);
+                    setCell(row, 5, nullSafe(f.getSeverity()), false);
+                    setCell(row, 6, nullSafe(f.getDescription()), false);
                 }
             }
 

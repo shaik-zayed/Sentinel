@@ -1,6 +1,7 @@
 package org.sentinel.reportservice.service.generator;
 
 import lombok.extern.slf4j.Slf4j;
+import org.sentinel.reportservice.dto.CveFinding;
 import org.sentinel.reportservice.dto.ReportData;
 import org.springframework.stereotype.Component;
 
@@ -144,6 +145,34 @@ public class HtmlReportGenerator {
                     }
                     sb.append("</details></td></tr>\n");
                 }
+            }
+            sb.append("</tbody></table></div>\n");
+        }
+
+        // ── CVE Findings ─────────────────────────────────────────────────────
+        List<CveFinding> findings = d.getCveFindings();
+        if (findings != null && !findings.isEmpty()) {
+            sb.append("<h2>CVE Findings (").append(findings.size()).append(")</h2>\n");
+            sb.append("<div class=\"card\">\n<table>\n<thead><tr>")
+                    .append("<th>Port</th><th>Service</th><th>Product / Version</th>")
+                    .append("<th>CVE ID</th><th>CVSS</th><th>Severity</th>")
+                    .append("<th>Description</th></tr></thead>\n<tbody>\n");
+            for (CveFinding f : findings) {
+                sb.append("<tr>");
+                // port + protocol
+                sb.append("<td>").append(f.getPort())
+                        .append(" (").append(esc(f.getProtocol())).append(")</td>");
+                sb.append("<td>").append(esc(f.getServiceName())).append("</td>");
+                String pv = join(" ", f.getProduct(), f.getVersion());
+                sb.append("<td>").append(esc(pv)).append("</td>");
+                sb.append("<td><code>").append(esc(f.getCveId())).append("</code></td>");
+                sb.append("<td>").append(f.getCvssScore() != null
+                        ? String.format("%.1f", f.getCvssScore()) : "—").append("</td>");
+                sb.append("<td>").append(esc(f.getSeverity())).append("</td>");
+                sb.append("<td style=\"max-width:300px\">")
+                        .append(esc(f.getDescription() != null ? f.getDescription() : ""))
+                        .append("</td>");
+                sb.append("</tr>\n");
             }
             sb.append("</tbody></table></div>\n");
         }
