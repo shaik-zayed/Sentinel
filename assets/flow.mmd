@@ -26,6 +26,7 @@ sequenceDiagram
     participant N as Nmap Service
     participant D as Docker
     participant DB as MySQL
+    participant NVD as NVD API
     participant R as Report Service
     participant M as MinIO
 
@@ -56,32 +57,51 @@ sequenceDiagram
         D -->> N: Container ready
         N ->> N: Execute nmap command
         D -->> N: Scan output (stdout/stderr)
-        N ->> K: Publish ScanResult (output)
+        N ->> K: Publish ScanResult (XML output)
         K ->> S: Deliver ScanResult
-        S ->> DB: Update scan (status=FINISHED, output)
+        S ->> DB: Update scan (status=FINISHED, xml output)
     end
 
 %% -------- PHASE 3 --------
     rect rgb(255,255,255)
-        Note over C,M: 📄 Phase 3: Report Generation
-        C ->> G: POST /report/{scanId}?format=pdf
-        G ->> G: Validate token
-        G ->> R: Forward report request + userId
-        R ->> S: GET /scan/{scanId}/result (userId header)
-        S ->> DB: Fetch scan output
-        DB -->> S: scan output (XML)
-        S -->> R: ScanResultResponse (output)
-        R ->> R: Parse XML -> ReportData
-        R ->> R: Generate PDF/HTML/DOCX
-        R ->> M: Upload report object
-        M -->> R: Upload success
-        R -->> G: Presigned URL or download link
-        G -->> C: Report ready (download URL)
+        Note over C,M: 🔍 Phase 3: CVE Enrichment (async, post-scan)
+        S ->> S: Parse XML — extract services + CPEs
+        S ->> DB: Set enrichmentStatus=IN_PROGRESS
+        loop Per detected service
+            S ->> NVD: CPE / keyword lookup
+            NVD -->> S: CVE list with severity scores
+            S ->> DB: Persist findings (cveId, severity, description)
+        end
+        S ->> DB: Set enrichmentStatus=COMPLETED (or PARTIAL/FAILED/NOT_APPLICABLE)
+        C ->> G: GET /scan/{scanId}/findings (poll)
+        G ->> S: Forward findings request
+        S ->> DB: Fetch findings + enrichmentStatus
+        DB -->> S: findings list
+        S -->> G: FindingsResponse (202 if in-progress, 200 if settled)
+        G -->> C: Findings + enrichmentStatus
+    end
 
-        C ->> G: GET /report/{scanId}/download?format=pdf
-        G ->> R: Forward download request
-        R ->> M: Download report bytes
+%% -------- PHASE 4 --------
+    rect rgb(245,245,245)
+        Note over C,M: 📄 Phase 4: Report Generation & Download
+        C ->> G: GET /report/{scanId}/download?format=PDF
+        G ->> G: Validate token
+        G ->> R: Forward download request + userId
+        R ->> M: Check if report cached in MinIO
+        alt Not cached
+            R ->> S: GET /scan/{scanId}/result
+            S ->> DB: Fetch scan XML output
+            DB -->> S: scan XML
+            S -->> R: ScanResultResponse
+            R ->> S: GET /scan/{scanId}/findings
+            S -->> R: CVE findings
+            R ->> R: Parse XML + findings → ReportData
+            R ->> R: Generate PDF / HTML / JSON / DOCX
+            R ->> M: Upload report object
+            M -->> R: Upload success
+        end
+        R ->> M: Fetch report bytes
         M -->> R: File content
-        R -->> G: Report bytes
-        G -->> C: PDF/HTML/DOCX file
+        R -->> G: Report bytes (Content-Disposition: attachment)
+        G -->> C: PDF / HTML / JSON / DOCX file
     end

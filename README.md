@@ -1,8 +1,8 @@
 ## Sentinel — Vulnerability Assessment Platform
 
 A distributed, microservices-based vulnerability assessment platform that allows security professionals and developers
-to run Nmap network scans, manage results, and generate detailed reports all through a secure, authenticated REST API.
-
+to run Nmap network scans, enrich results with CVE findings, and generate detailed reports — all through a secure,
+authenticated REST API.
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=flat-square)
@@ -24,8 +24,11 @@ allowing multiple users to run concurrent scans without blocking.
 
 A dedicated Nmap service consumes scan jobs from Kafka, dynamically spins up an ephemeral Docker container running Nmap,
 executes the scan, captures the output, and publishes results back through Kafka. The scan service persists results to
-MySQL. Users can then request a report for any completed scan, which is generated in their chosen format (PDF, HTML, or
-DOCX) and stored in MinIO object storage downloadable via the report service.
+MySQL and immediately triggers **CVE enrichment** — querying the NVD API to match detected service versions against
+known vulnerabilities and storing findings with severity scores.
+
+Users can then download a report for any completed scan in their chosen format (PDF, HTML, JSON, or DOCX), generated
+on-demand and cached in MinIO object storage.
 
 ---
 
@@ -36,36 +39,38 @@ DOCX) and stored in MinIO object storage downloadable via the report service.
 ### Flow Diagram
 
 ![Flow Diagram](./assets/flow.svg)
+
 ---
 
 ### Services
 
-| Service          | Port | Responsibility                                                                                             |
-|------------------|------|------------------------------------------------------------------------------------------------------------|
-| `api-gateway`    | 7777 | Single entry point. JWT validation, load-balanced routing via Eureka, request ID tracing                   |
-| `auth-service`   | 8083 | User registration, email verification, JWT access + refresh tokens, token blacklisting, logout             |
-| `scan-service`   | 8081 | Accepts scan requests, publishes to Kafka, persists results from Kafka, exposes scan query APIs            |
-| `nmap-service`   | 8082 | Consumes scan jobs from Kafka, builds Nmap command, spins up ephemeral Docker container, publishes results |
-| `report-service` | 8085 | Fetches scan results from scan-service, generates reports, uploads to MinIO, serves downloads              |
-| `eureka-server`  | 8761 | Netflix Eureka service registry for service discovery                                                      |
+| Service          | Port | Responsibility                                                                                                          |
+|------------------|------|-------------------------------------------------------------------------------------------------------------------------|
+| `api-gateway`    | 7777 | Single entry point. JWT validation, load-balanced routing via Eureka, request ID tracing                                |
+| `auth-service`   | 8083 | User registration, email verification, JWT access + refresh tokens, token blacklisting, logout                          |
+| `scan-service`   | 8081 | Accepts scan requests, publishes to Kafka, persists results, triggers CVE enrichment via NVD API, exposes findings API  |
+| `nmap-service`   | 8082 | Consumes scan jobs from Kafka, builds Nmap command, spins up ephemeral Docker container, publishes results              |
+| `report-service` | 8085 | Fetches scan results + CVE findings, generates PDF/HTML/JSON/DOCX reports, caches in MinIO, serves downloads            |
+| `eureka-server`  | 8761 | Netflix Eureka service registry for service discovery                                                                   |
 
 ---
 
 ## Tech Stack
 
-| Category             | Technology                                                      |
-|----------------------|-----------------------------------------------------------------|
-| Language             | Java 21 (source compatibility: Java 17)                         |
-| Framework            | Spring Boot 4.0 · Spring Cloud 2025                             |
-| API Gateway          | Spring Cloud Gateway (WebFlux reactive)                         |
-| Auth                 | Spring Security + JJWT 0.12.6 — access/refresh token lifecycle  |
-| Messaging            | Apache Kafka (KRaft mode — no Zookeeper)                        |
-| Container Management | docker-java 3.7.0 — programmatic Docker container lifecycle     |
-| Database             | MySQL 8 — schema initialised via `init.sql`                     |
-| Object Storage       | MinIO (S3-compatible)                                           |
-| Service Discovery    | Netflix Eureka                                                  |
-| Infrastructure       | Docker + Docker Compose — health checks and dependency ordering |
-| Dev Email            | smtp4dev — local SMTP server + web UI                           |
+| Category             | Technology                                                        |
+|----------------------|-------------------------------------------------------------------|
+| Language             | Java 21 (source compatibility: Java 17)                           |
+| Framework            | Spring Boot 4.0 · Spring Cloud 2025                               |
+| API Gateway          | Spring Cloud Gateway (WebFlux reactive)                           |
+| Auth                 | Spring Security + JJWT 0.12.6 — access/refresh token lifecycle   |
+| Messaging            | Apache Kafka (KRaft mode — no Zookeeper)                          |
+| Container Management | docker-java 3.7.0 — programmatic Docker container lifecycle       |
+| Database             | MySQL 8 — schema initialised via `init.sql`                       |
+| Object Storage       | MinIO (S3-compatible)                                             |
+| CVE Intelligence     | NVD API — CPE + keyword lookup, rate-limited, async enrichment    |
+| Service Discovery    | Netflix Eureka                                                    |
+| Infrastructure       | Docker + Docker Compose — health checks and dependency ordering   |
+| Dev Email            | smtp4dev — local SMTP server + web UI                             |
 
 ---
 
@@ -96,6 +101,13 @@ Saving files to a service's local filesystem breaks in a containerised environme
 persistent, S3-compatible object storage that survives container restarts and scales independently of the application
 services.
 
+**Why async CVE enrichment instead of blocking on the NVD API?**
+
+The NVD public API is rate-limited (5 requests per 30 seconds unauthenticated) and can be slow. Enrichment runs in a
+dedicated thread pool after scan results arrive, so the scan status reaches `FINISHED` immediately and clients can poll
+`/findings` independently. Enrichment status transitions from `PENDING → IN_PROGRESS → COMPLETED` (or `PARTIAL` /
+`FAILED` / `NOT_APPLICABLE` if no versioned services were detected).
+
 ---
 
 ## API Reference
@@ -125,27 +137,39 @@ header and go through the API Gateway at `http://localhost:7777`.
 | `GET`    | `/me`                 | Get the currently authenticated user's profile |
 | `PUT`    | `/me/change-password` | Change the current user's password             |
 | `GET`    | `/{id}`               | Get a user profile by ID                       |
-| `GET`    | `/getAllUsers`        | List all users *(admin)*                       |
+| `GET`    | `/getAllUsers`         | List all users *(admin)*                       |
 | `DELETE` | `/{id}`               | Delete a user *(admin)*                        |
 | `POST`   | `/{id}/unlock`        | Unlock a locked user account *(admin)*         |
 
 ### Scans — `/api/v1/scan`
 
-| Method   | Endpoint                  | Description                                                                  |
-|----------|---------------------------|------------------------------------------------------------------------------|
-| `POST`   | `/submit`                 | Submit a new scan — returns `202 Accepted` with `scanId`                     |
-| `GET`    | `/{scanId}`               | Get full scan details                                                        |
-| `GET`    | `/{scanId}/status`        | Poll scan status (`ACCEPTED` → `QUEUED` → `STARTED` → `FINISHED` / `FAILED`) |
-| `GET`    | `/{scanId}/result`        | Get the raw scan output for a completed scan                                 |
-| `GET`    | `/list?limit=20&offset=0` | Paginated list of the authenticated user's scans                             |
-| `DELETE` | `/{scanId}`               | Delete a scan record                                                         |
+| Method   | Endpoint                  | Description                                                                                         |
+|----------|---------------------------|-----------------------------------------------------------------------------------------------------|
+| `POST`   | `/submit`                 | Submit a new scan — returns `202 Accepted` with `scanId`                                            |
+| `GET`    | `/{scanId}`               | Get full scan details                                                                               |
+| `GET`    | `/{scanId}/status`        | Poll scan status (`ACCEPTED` → `QUEUED` → `STARTED` → `FINISHED` / `FAILED`)                       |
+| `GET`    | `/{scanId}/result`        | Get the raw Nmap XML output for a completed scan                                                    |
+| `GET`    | `/{scanId}/findings`      | Get CVE findings — returns enrichment status + list of findings. Returns `202` while enrichment is in progress |
+| `GET`    | `/list?limit=20&page=0`   | Paginated list of the authenticated user's scans                                                    |
+| `DELETE` | `/{scanId}`               | Delete a scan record                                                                                |
+
+#### Enrichment Status Values
+
+| Status           | Meaning                                                                             |
+|------------------|-------------------------------------------------------------------------------------|
+| `PENDING`        | Enrichment not yet started                                                          |
+| `IN_PROGRESS`    | NVD API calls are running                                                           |
+| `COMPLETED`      | All CVEs fetched and saved — findings list is final                                 |
+| `PARTIAL`        | Some services fetched; at least one NVD call failed — list may be incomplete        |
+| `FAILED`         | Enrichment failed after all retries — no findings saved                             |
+| `NOT_APPLICABLE` | Scan detected no services with identifiable product/version — nothing to look up    |
 
 ### Reports — `/api/v1/report`
 
-| Method | Endpoint                        | Description                                        |
-|--------|---------------------------------|----------------------------------------------------|
-| `POST` | `/{scanId}?format=PDF`          | Generate a report — formats: `PDF`, `HTML`, `DOCX` |
-| `GET`  | `/{scanId}/download?format=PDF` | Download the generated report file                 |
+| Method | Endpoint                        | Description                                                              |
+|--------|---------------------------------|--------------------------------------------------------------------------|
+| `GET`  | `/{scanId}/download?format=PDF` | Generate (or serve cached) report and stream the file — formats: `PDF`, `HTML`, `JSON`, `DOCX` |
+| `GET`  | `/{scanId}/formats`             | List which formats are already cached in MinIO for this scan             |
 
 ---
 
@@ -208,24 +232,25 @@ minutes for image pulls.
 1. Register    POST  /api/v1/auth/register
 2. Verify      Open  http://localhost:5000  →  click the verification link
 3. Login       POST  /api/v1/auth/login     →  copy the accessToken
-4. Scan        POST  /api/v1/scan/submit        Authorization: Bearer <token>
+4. Scan        POST  /api/v1/scan/submit            Authorization: Bearer <token>
 5. Poll        GET   /api/v1/scan/{scanId}/status   (until FINISHED)
+6. Findings    GET   /api/v1/scan/{scanId}/findings (poll until enrichmentStatus is COMPLETED)
 7. Download    GET   /api/v1/report/{scanId}/download?format=PDF
 ```
 
-HTTP request files for IntelliJ / VS Code are in `/http-requests/`.
+HTTP request files for IntelliJ / VS Code are in `/http/`.
 
 ### Scan Request Payload
 
-| Field                  | Type      | Values                                                     |
-|------------------------|-----------|------------------------------------------------------------|
+| Field                  | Type      | Values                                                      |
+|------------------------|-----------|-------------------------------------------------------------|
 | `target`               | `string`  | IP address or hostname — e.g. `192.168.1.1`, `example.com` |
-| `scanMode`             | `string`  | `LIGHT` · `DEEP`                                           |
-| `protocol`             | `string`  | `TCP` · `UDP`                                              |
-| `portMode`             | `string`  | `COMMON` · `LIST`                                          |
-| `portValue`            | `string`  | `top-100` · `top-1000` · custom e.g. `80,443,8080`         |
-| `detectOs`             | `boolean` | `true` · `false`                                           |
-| `detectServiceVersion` | `boolean` | `true` · `false`                                           |
+| `scanMode`             | `string`  | `LIGHT` · `DEEP`                                            |
+| `protocol`             | `string`  | `TCP` · `UDP`                                               |
+| `portMode`             | `string`  | `COMMON` · `LIST`                                           |
+| `portValue`            | `string`  | `top-100` · `top-1000` · custom e.g. `80,443,8080`          |
+| `detectOs`             | `boolean` | `true` · `false`                                            |
+| `detectServiceVersion` | `boolean` | `true` · `false`                                            |
 
 ---
 
@@ -235,13 +260,14 @@ HTTP request files for IntelliJ / VS Code are in `/http-requests/`.
 Sentinel/
 ├── api-gateway/          Spring Cloud Gateway + JWT validation filter
 ├── auth-service/         Registration, login, JWT lifecycle, email verification, password reset
-├── scan-service/         Scan request intake, Kafka producer/consumer, result persistence
-├── nmap-service/         Kafka consumer, Docker container orchestration, Nmap execution
-├── report-service/       Report generation (PDF/HTML/DOCX) + MinIO upload and download
+├── scan_service/         Scan request intake, Kafka producer/consumer, CVE enrichment via NVD, findings API
+├── nmap_service/         Kafka consumer, Docker container orchestration, Nmap execution
+├── report-service/       Report generation (PDF/HTML/JSON/DOCX) + MinIO upload and download
 ├── eureka-server/        Netflix Eureka service registry
 ├── mysql-init/           Database schema initialisation (init.sql)
+├── infra/                Docker Compose files for full-stack and dev environments
 ├── assets/               Architecture and flow diagrams (.mmd source + .svg renders)
-├── http-requests/        IntelliJ HTTP client request files for manual testing
+├── http/                 IntelliJ HTTP client request files for manual testing
 ├── docker-compose.yml    Full stack orchestration with health checks
 ├── Dockerfile            Multi-service layered build (SERVICE_NAME build arg)
 └── pom.xml               Parent Maven POM
@@ -255,6 +281,7 @@ Sentinel/
 - Limited automated test coverage — manual testing via HTTP files
 - Single Kafka broker with replication factor 1 — not production-grade for high availability
 - Docker socket mount required for Nmap containers — review security implications before deploying to production
+- NVD API used without an API key — rate limited to 5 requests per 30 seconds; enrichment may be slow for scans with many detected services
 - Prometheus / Grafana metrics integration stubbed but not enabled
 
 ---

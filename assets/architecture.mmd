@@ -11,9 +11,10 @@
   'fontSize': '16px'
 }}}%%
 flowchart TD
+
 subgraph OuterBox[" "]
 direction TB
-style OuterBox fill:#f6f8fa,stroke:#f6f8fa,stroke-width:0px
+style OuterBox fill:#ffffff,stroke:#ffffff,stroke-width:0px
 
 subgraph Client_Layer["🌐 Client"]
 Client["Browser / REST Client"]
@@ -23,24 +24,37 @@ subgraph Gateway_Layer["🚪 API Gateway :7777"]
 Gateway["JWT validation, routing, tracing"]
 end
 
+subgraph CoreAndStorage[" "]
+direction LR
+
 subgraph Service_Layer["🧠 Core Services"]
+direction LR
 Auth["🔐 Auth Service :8083<br/>Registration, Login, JWT, Blacklist"]
-Scan["📡 Scan Service :8081<br/>Request intake, result persistence"]
-Report["📄 Report Service :8085<br/>Generation, MinIO storage"]
+Scan["📡 Scan Service :8081<br/>Request intake, result persistence<br/>CVE enrichment orchestration"]
+Report["📄 Report Service :8085<br/>PDF / HTML / JSON / DOCX generation"]
 Nmap["🐳 Nmap Service :8082<br/>Docker orchestration"]
+end
+
+subgraph Storage_Layer["💾 Storage"]
+direction TB
+MySQL[("MySQL :3306")]
+Kafka[("Kafka :9092")]
+MinIO[("MinIO :9000")]
+end
 end
 
 subgraph Discovery_Layer["🔍 Service Discovery"]
 Eureka["Eureka Server :8761"]
 end
 
-subgraph Storage_Layer["💾 Storage"]
-MySQL[("MySQL :3306")]
-MinIO[("MinIO :9000")]
-Kafka[("Kafka :9092")]
+subgraph External_Layer["🌍 External APIs"]
+NVD["NVD API<br/>nvd.nist.gov<br/>CVE lookup"]
 end
 
+Docker["Docker daemon<br/>ephemeral nmap containers"]
+
 Client --> Gateway
+
 Gateway --> Auth
 Gateway --> Scan
 Gateway --> Report
@@ -51,16 +65,21 @@ Scan -.->|register| Eureka
 Report -.->|register| Eureka
 Nmap -.->|register| Eureka
 
-Scan -->|publish| Kafka
-Kafka -->|consume| Nmap
+Scan -->|publish scan job| Kafka
+Kafka -->|consume scan job| Nmap
 Nmap -->|publish result| Kafka
-Kafka -->|consume| Scan
+Kafka -->|consume result| Scan
 
-Scan --> MySQL
+Scan -->|async enrichment| NVD
+NVD -->|CVE findings| Scan
+
+Report -->|fetch result + findings| Scan
+
 Auth --> MySQL
+Scan --> MySQL
 Report --> MinIO
 
-Nmap -.->|spawns| Docker["Docker daemon<br/>ephemeral nmap containers"]
+Nmap -.->|spawns| Docker
 end
 
 linkStyle default stroke:#111827,stroke-width:3px
@@ -70,15 +89,17 @@ style Gateway_Layer stroke:#111827,stroke-width:2.5px,rx:12px,ry:12px
 style Service_Layer stroke:#111827,stroke-width:2.5px,rx:12px,ry:12px
 style Discovery_Layer stroke:#111827,stroke-width:2.5px,rx:12px,ry:12px
 style Storage_Layer stroke:#111827,stroke-width:2.5px,rx:12px,ry:12px
+style External_Layer stroke:#111827,stroke-width:2.5px,rx:12px,ry:12px
 
+style Client fill:#eaeef2,stroke:#111827,stroke-width:2px,color:#111827,font-weight:700
 style Gateway fill:#0969da,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Auth fill:#2da44e,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Scan fill:#2da44e,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Report fill:#2da44e,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Nmap fill:#fb8500,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
-style Kafka fill:#f59e0b,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style MySQL fill:#0969da,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
+style Kafka fill:#f59e0b,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style MinIO fill:#cf222e,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Eureka fill:#8250df,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
+style NVD fill:#cf222e,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
 style Docker fill:#57606a,stroke:#111827,stroke-width:2px,color:#ffffff,font-weight:700
-style Client fill:#eaeef2,stroke:#111827,stroke-width:2px,color:#111827,font-weight:700
