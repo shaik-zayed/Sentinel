@@ -1,4 +1,4 @@
-package org.sentinel.authservice.exceptions;
+package org.sentinel.authservice.exception;
 
 public class InvalidTokenException extends RuntimeException {
     public InvalidTokenException(String message) {

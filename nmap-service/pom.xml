@@ -11,7 +11,7 @@
 
     <artifactId>nmap-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>nmap_service</name>
+    <name>nmap-service</name>
     <description>nmap-service</description>
 
     <properties>

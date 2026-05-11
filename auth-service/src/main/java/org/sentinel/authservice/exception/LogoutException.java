@@ -1,4 +1,4 @@
-package org.sentinel.authservice.exceptions;
+package org.sentinel.authservice.exception;
 
 /**
  * Thrown when a logout operation fails (e.g., token blacklisting error).

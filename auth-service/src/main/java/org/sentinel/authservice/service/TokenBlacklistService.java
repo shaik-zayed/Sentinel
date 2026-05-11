@@ -3,7 +3,7 @@ package org.sentinel.authservice.service;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sentinel.authservice.exceptions.TokenBlacklistException;
+import org.sentinel.authservice.exception.TokenBlacklistException;
 import org.sentinel.authservice.model.TokenBlacklist;
 import org.sentinel.authservice.repository.TokenBlacklistRepository;
 import org.sentinel.authservice.util.JwtUtil;

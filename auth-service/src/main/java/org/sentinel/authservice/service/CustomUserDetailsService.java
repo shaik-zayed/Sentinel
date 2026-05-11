@@ -2,7 +2,7 @@ package org.sentinel.authservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.sentinel.authservice.exceptions.UserNotFoundException;
+import org.sentinel.authservice.exception.UserNotFoundException;
 import org.sentinel.authservice.model.User;
 import org.sentinel.authservice.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;

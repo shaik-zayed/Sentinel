@@ -1,4 +1,4 @@
-package org.sentinel.authservice.exceptions;
+package org.sentinel.authservice.exception;
 
 import lombok.Builder;
 

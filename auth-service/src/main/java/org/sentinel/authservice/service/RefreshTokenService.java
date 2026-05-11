@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sentinel.authservice.model.RefreshToken;
 import org.sentinel.authservice.model.User;
-import org.sentinel.authservice.exceptions.InvalidTokenException;
+import org.sentinel.authservice.exception.InvalidTokenException;
 import org.sentinel.authservice.repository.RefreshTokenRepository;
 import org.sentinel.authservice.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;

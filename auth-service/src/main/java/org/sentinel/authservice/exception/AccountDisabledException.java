@@ -1,4 +1,4 @@
-package org.sentinel.authservice.exceptions;
+package org.sentinel.authservice.exception;
 
 public class AccountDisabledException extends RuntimeException {
     public AccountDisabledException(String message) {

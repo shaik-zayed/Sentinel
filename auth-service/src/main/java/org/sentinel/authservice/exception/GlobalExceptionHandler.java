@@ -1,4 +1,4 @@
-package org.sentinel.authservice.exceptions;
+package org.sentinel.authservice.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
