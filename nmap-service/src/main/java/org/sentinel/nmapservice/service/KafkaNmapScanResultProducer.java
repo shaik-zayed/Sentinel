@@ -9,6 +9,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -48,17 +49,25 @@ public class KafkaNmapScanResultProducer {
         });
     }
 
-    public void pushScanResultSync(ScanResultMessage result) throws Exception {
+
+    public void pushScanResultSync(ScanResultMessage result) {
         String key = result.getCorrelationId();
 
         log.debug("Sending scan result SYNCHRONOUSLY. CorrelationId: {}", key);
 
-        SendResult<String, ScanResultMessage> sendResult =
-                kafkaTemplate.send(topicName, key, result).get();
+        try {
+            SendResult<String, ScanResultMessage> sendResult =
+                    kafkaTemplate.send(topicName, key, result)
+                            .get(10, TimeUnit.SECONDS);
 
-        log.info("Scan result sent (sync). CorrelationId: {}, Partition: {}, Offset: {}",
-                result.getCorrelationId(),
-                sendResult.getRecordMetadata().partition(),
-                sendResult.getRecordMetadata().offset());
+            log.info("Scan result sent (sync). CorrelationId: {}, Partition: {}, Offset: {}",
+                    result.getCorrelationId(),
+                    sendResult.getRecordMetadata().partition(),
+                    sendResult.getRecordMetadata().offset());
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to send scan result to Kafka. CorrelationId: " + key, e);
+        }
     }
 }

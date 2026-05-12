@@ -14,7 +14,7 @@ spring:
     #    url: jdbc:mysql://localhost:3306/scan_results
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/scan_results}
     username: ${DB_USERNAME:sentinel}
-    password: ${DB_PASSWORD:sentinel} 
+    password: ${DB_PASSWORD:sentinel}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -80,21 +80,21 @@ management:
     livenessstate:
       enabled: true
 
-logging:
-  level:
-    # Your application code
-    org.sentinel.scanservice: DEBUG
-
-    # Apache HttpClient wire – shows full request/response headers, body, SSL handshake
-    org.apache.http: DEBUG
-    org.apache.http.wire: DEBUG
-
-    # Spring Retry – shows when retries happen and why
-    org.springframework.retry: DEBUG
-
-    # Spring Web (RestTemplate)
-    org.springframework.web.client.RestTemplate: DEBUG
-
-    # Hibernate SQL binding (optional, for DB queries)
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+#logging:
+#  level:
+#    # Your application code
+#    org.sentinel.scanservice: DEBUG
+#
+#    # Apache HttpClient wire – shows full request/response headers, body, SSL handshake
+#    org.apache.http: DEBUG
+#    org.apache.http.wire: DEBUG
+#
+#    # Spring Retry – shows when retries happen and why
+#    org.springframework.retry: DEBUG
+#
+#    # Spring Web (RestTemplate)
+#    org.springframework.web.client.RestTemplate: DEBUG
+#
+#    # Hibernate SQL binding (optional, for DB queries)
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

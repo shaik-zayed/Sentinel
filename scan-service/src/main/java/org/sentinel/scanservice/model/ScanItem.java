@@ -38,6 +38,9 @@ public class ScanItem {
     @Column(unique = true, length = 36)
     private String correlationId;
 
+    @Column(unique = true, length = 36)
+    private String idempotencyKey;
+
     @Column(nullable = false)
     private String target;
 

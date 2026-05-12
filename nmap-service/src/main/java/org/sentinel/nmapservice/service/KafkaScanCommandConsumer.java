@@ -83,7 +83,7 @@ public class KafkaScanCommandConsumer {
                     .executionTimeMs(executionMs)
                     .build();
 
-            resultProducer.pushScanResult(result);
+            resultProducer.pushScanResultSync(result);
 
             ack.acknowledge();
 
@@ -108,8 +108,14 @@ public class KafkaScanCommandConsumer {
                     .executionTimeMs(executionMs)
                     .build();
 
-            resultProducer.pushScanResult(errorResult);
 
+            try {
+                resultProducer.pushScanResultSync(errorResult);
+            } catch (Exception kafkaEx) {
+                log.error("CRITICAL: Scan failed AND could not publish error result to Kafka. " +
+                                "CorrelationId: {}. Offset will be retried. KafkaError: {}",
+                        message.getCorrelationId(), kafkaEx.getMessage());
+            }
             log.warn("Offset NOT acknowledged (will retry). CorrelationId: {}",
                     message.getCorrelationId());
         }

@@ -25,19 +25,18 @@ public class ScanController {
     private final ScanService scanService;
     private final FindingService findingService;
 
-    @PostMapping("/submit")
-    public ResponseEntity<ScanSubmissionResponse> submitScan(
-            @Valid @RequestBody ScanRequest request,
-            @RequestHeader(value = "X-User-Id") String userIdHeader) {
+@PostMapping("/submit")
+public ResponseEntity<ScanSubmissionResponse> submitScan(
+        @Valid @RequestBody ScanRequest request,
+        @RequestHeader("X-User-Id") String userIdHeader,
+        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
 
-        UUID userId = UUID.fromString(userIdHeader);
-        ScanSubmissionResponse response = scanService.submitScan(request, userId);
-
-        return ResponseEntity
-                .status(HttpStatus.ACCEPTED)
-                .header("Location", response.getStatusUrl())
-                .body(response);
-    }
+    UUID userId = UUID.fromString(userIdHeader);
+    ScanSubmissionResponse response = scanService.submitScan(request, userId, idempotencyKey);
+    return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .header("Location", response.getStatusUrl())
+            .body(response);
+}
 
     @GetMapping("/{scanId}")
     public ResponseEntity<ScanResponse> getScan(
