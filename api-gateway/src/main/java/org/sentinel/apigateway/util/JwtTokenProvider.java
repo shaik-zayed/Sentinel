@@ -49,7 +49,6 @@ public class JwtTokenProvider {
             return Decoders.BASE64.decode(key);
         } catch (IllegalArgumentException ex) {
             // not valid base64 — use raw bytes
-//            return key.getBytes(StandardCharsets.UTF_8);
             throw new IllegalStateException("JWT secret must be Base64-encoded and at least 256 bits. Generate one using: openssl rand -base64 32", ex);
         }
     }

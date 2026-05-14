@@ -61,7 +61,7 @@ services:
   #      kafka:
   #        condition: service_healthy
   #    ports:
-  #      - "8079:8080"    # Moved off 8080 – api-gateway uses 7777, but avoid surprise conflicts
+  #      - "8079:8080"
   #    environment:
   #      KAFKA_CLUSTERS_0_NAME: local
   #      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
     ports:
       - "5000:80"   # Web UI  → http://localhost:5000
-      - "25:25"   # SMTP
+      - "25:25"     # SMTP
       - "143:143"   # IMAP
     environment:
       SMTP4DEV__BASE_URL: "http://localhost:80"

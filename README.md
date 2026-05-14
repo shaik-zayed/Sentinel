@@ -192,7 +192,22 @@ git clone https://github.com/shaik-zayed/Sentinel.git
 cd Sentinel
 ```
 
-**2. Configure environment**
+**2. Configure Docker Desktop (Windows/macOS only)**
+
+The `nmap-service` communicates with Docker using the Docker TCP socket.
+
+Open Docker Desktop → Settings → General
+
+Enable:
+
+- `Expose daemon on tcp://localhost:2375 without TLS`
+
+Then click **Apply & Restart**.
+
+> This setting is required to run the project locally on Docker Desktop (Windows/macOS), because the application uses `docker-java` to create temporary Nmap containers dynamically.
+
+
+**3. Configure environment**
 
 ```bash
 cp .env.example .env
@@ -204,13 +219,13 @@ Open `.env` and set `JWT_SECRET_KEY` to a Base64-encoded 256-bit key:
 openssl rand -base64 32
 ```
 
-**3. Build all services**
+**4. Build all services**
 
 ```bash
 mvn clean package -DskipTests
 ```
 
-**4. Start the full stack**
+**5. Start the full stack**
 
 ```bash
 docker compose up --build
@@ -286,6 +301,16 @@ Sentinel/
 - NVD API used without an API key -- rate limited to 5 requests per 30 seconds; enrichment may be slow for scans with
   many detected services
 - Prometheus / Grafana metrics integration stubbed but not enabled
+
+---
+
+## Security & Legal Notice
+
+- This project is intended for educational, research, and authorized security testing purposes only.
+
+- Only scan systems, networks, or IP addresses that you own or have explicit permission to test. Unauthorized network scanning may violate applicable laws, regulations, or organizational policies.
+
+- The author is not responsible for any misuse, damage, legal consequences, or unauthorized activities performed using this software. By using this project, you agree that you are solely responsible for your actions and for complying with all applicable laws and regulations.
 
 ---
 

@@ -67,7 +67,7 @@ services:
   #      kafka:
   #        condition: service_healthy
   #    ports:
-  #      - "8079:8080"    # Moved off 8080 – api-gateway uses 7777, but avoid surprise conflicts
+  #      - "8079:8080"
   #    environment:
   #      KAFKA_CLUSTERS_0_NAME: local
   #      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
@@ -81,11 +81,9 @@ services:
     restart: unless-stopped
     ports:
       - "5000:80"   # Web UI  → http://localhost:5000
-      #      - "2525:25"   # SMTP
       - "25:25"   # SMTP
       - "143:143"   # IMAP
     environment:
-      # No external IP needed inside Docker – services reach it via hostname
       SMTP4DEV__BASE_URL: "http://smtp4dev:80"
     volumes:
       - smtp4dev-data:/smtp4dev
@@ -130,7 +128,6 @@ services:
       - "8761:8761"
     environment:
       EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
-    #      JWT_SECRET_KEY: ""
     networks:
       - sentinel-net
     restart: unless-stopped
@@ -153,13 +150,10 @@ services:
     depends_on:
       eureka-server:
         condition: service_healthy
-    #      kafka:
-    #        condition: service_healthy
     environment:
       SERVER_PORT: "7777"
       EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
-    #      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     networks:
       - sentinel-net
     restart: unless-stopped
@@ -177,8 +171,11 @@ services:
       args:
         SERVICE_NAME: auth-service
     container_name: sentinel-v1-auth
-    ports:
-      - "8083:8083"
+    #    ports:
+    #      - "8083:8083"
+    # removing external access by using expose.
+    expose:
+      - "8083"
     depends_on:
       mysql:
         condition: service_healthy
@@ -191,14 +188,12 @@ services:
       JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-      # FIX: Use variable for DB password (consistency with scan-service)
       SPRING_DATASOURCE_USERNAME: "sentinel"
       SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD:-sentinel}"
       DB_USERNAME: "sentinel"
       DB_PASSWORD: "${DB_PASSWORD:-sentinel}"
       SMTP_HOST: "smtp4dev"
       SMTP_PORT: "25"
-      # CORS – allow the gateway to call through
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:4200,http://localhost:7777"
     networks:
       - sentinel-net
@@ -217,8 +212,10 @@ services:
       args:
         SERVICE_NAME: scan-service
     container_name: sentinel-v1-scan
-    ports:
-      - "8081:8081"
+    #    ports:
+    #      - "8081:8081"
+    expose:
+      - "8081"
     depends_on:
       mysql:
         condition: service_healthy
@@ -252,8 +249,10 @@ services:
       args:
         SERVICE_NAME: nmap-service
     container_name: sentinel-v1-nmap
-    ports:
-      - "8082:8082"
+    #    ports:
+    #      - "8082:8082"
+    expose:
+      - "8082"
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -263,18 +262,20 @@ services:
       SERVER_PORT: "8082"
       EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
-      # Override docker.host so nmap-service uses the mounted socket
-      # instead of the hardcoded tcp://localhost:2375
       DOCKER_HOST: "unix:///var/run/docker.sock"
     volumes:
-      # Mount the Docker socket so nmap-service can launch nmap containers
-      # on the host Docker daemon (required for host-network nmap scans)
       - /var/run/docker.sock:/var/run/docker.sock
-    # nmap containers need CAP_NET_RAW for SYN scans – give it to the
-    # nmap-service container as well so the Docker API calls succeed
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
+    # group_add gives the sentinel user inside this container membership of
+    # the host's docker group so it can read/write the mounted Docker socket
+    # without running as root.
+    #
+    # How to find the value:
+    #   Linux: stat -c '%g' /var/run/docker.sock
+    #   macOS: stat -f '%g' /var/run/docker.sock
+    #
+    # .env file:  DOCKER_GID=999
+    group_add:
+      - "${DOCKER_GID:-999}"
     user: root
     networks:
       - sentinel-net
@@ -293,8 +294,10 @@ services:
       args:
         SERVICE_NAME: report-service
     container_name: sentinel-v1-report
-    ports:
-      - "8085:8085"
+    #    ports:
+    #      - "8085:8085"
+    expose:
+      - "8085"
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -307,7 +310,7 @@ services:
       EUREKA_SERVER_URL: "http://eureka-server:8761/eureka"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       MINIO_ENDPOINT: "http://minio:9000"
-      #      MINIO_ENDPOINT: "http://host.docker.internal:9000"
+      #     MINIO_ENDPOINT: "http://host.docker.internal:9000"
       MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:-sentinel}"
       MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:-sentinel123}"
       MINIO_BUCKET: "${MINIO_BUCKET:-sentinel-reports}"

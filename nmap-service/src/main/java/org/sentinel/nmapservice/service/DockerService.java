@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.WaitResponse;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -49,13 +50,12 @@ public class DockerService {
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-        // Fail fast: verify connection on startup so you know immediately if remote is unreachable
         try {
             dockerClient.pingCmd().exec();
             log.info("Successfully connected to Docker daemon at {}", dockerHost);
         } catch (Exception e) {
             log.error("Cannot reach Docker daemon at {}. " +
-                    "Make sure the remote host has TCP port open (see setup guide).", dockerHost);
+                    "Make sure the Docker socket is mounted", dockerHost);
             throw new RuntimeException("Docker connection failed: " + dockerHost, e);
         }
     }
@@ -64,30 +64,39 @@ public class DockerService {
         String containerId = null;
 
         try {
-            // Step 1: Pull image on remote host if not already cached
+            // Step 1: Pull image if not cached
             try {
                 dockerClient.inspectImageCmd(imageName).exec();
-                log.info("Image already cached on remote host: {}", imageName);
+                log.info("Image already cached: {}", imageName);
             } catch (NotFoundException e) {
-                log.warn("Image not on remote host, pulling {}...", imageName);
+                log.warn("Image not cached, pulling {}...", imageName);
                 dockerClient.pullImageCmd(imageName)
                         .withPlatform("linux/amd64")
                         .exec(new PullImageResultCallback())
                         .awaitCompletion();
-                log.info("Image pulled on remote host successfully");
+                log.info("Image pulled successfully");
             }
 
-            // Step 2: Host config
-            // Remote is Linux so host networking works — nmap gets direct network access
+            // Step 2: Host config : This explains the detailed info.
+            // Capabilities granted to the nmap *child* container only, NOT to nmap-service itself (nmap-service has no cap_add in docker-compose):
+            //
+            // NET_RAW is required for nmap SYN (-sS) and UDP (-sU) scans, which use raw sockets. Without it nmap falls back to connect scans (-sT) and reports degraded results.
+            //
+            // Explicitly dropped:
+            //   NET_ADMIN is not needed. nmap does not configure interfaces, routing tables, or firewall rules. Granting it would allow the nmap container to modify the host network stack.
+            //
+            // No `withUser("root")` : the instrumentisto/nmap image runs nmap as root by default because it owns the binary; granting NET_RAW is sufficient for raw socket access and is the minimal privilege needed.
+
             HostConfig hostConfig = HostConfig.newHostConfig()
                     .withAutoRemove(false)
-                    .withNetworkMode("host");
+                    .withNetworkMode("host")
+                    .withCapAdd(Capability.NET_RAW)
+                    .withCapDrop(Capability.NET_ADMIN);
 
-            // Step 3: Create container on remote Docker host
+            // Step 3: Create container — no explicit .withUser(root) call.
             CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
                     .withName(containerName)
                     .withHostConfig(hostConfig)
-                    .withUser("root")
                     .withTty(false)
                     .withAttachStdout(true)
                     .withAttachStderr(true)
@@ -95,27 +104,28 @@ public class DockerService {
                     .exec();
 
             containerId = container.getId();
-            log.info("Container created on remote host: {}", containerId);
+            log.info("Container created: {}", containerId);
 
-            // Step 4: Start the container
+            // Step 4: Start
             dockerClient.startContainerCmd(containerId).exec();
-            log.info("Container started on remote host, waiting for nmap to finish...");
+            log.info("Container started, waiting for nmap to finish...");
 
-            // Step 5: Wait for completion (5 min max)
+            // Step 5: Wait for completion
             WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
             boolean completed = dockerClient.waitContainerCmd(containerId)
                     .exec(waitCallback)
                     .awaitCompletion(scanTimeout, TimeUnit.MINUTES);
 
             if (!completed) {
-                throw new ContainerExecutionException("Scan timed out after 5 minutes");
+                throw new ContainerExecutionException(
+                        "Scan timed out after " + scanTimeout + " minutes");
             }
 
             WaitResponse waitResponse = waitCallback.getLastResponse();
             int exitCode = waitResponse != null ? waitResponse.getStatusCode() : -1;
             log.info("Container finished with exit code: {}", exitCode);
 
-            // Step 6: Stream logs back from remote container to local nmap-service
+            // Step 6: Collect output
             LogToStringCallback logCallback = new LogToStringCallback();
             dockerClient.logContainerCmd(containerId)
                     .withStdOut(true)
@@ -124,9 +134,9 @@ public class DockerService {
                     .awaitCompletion();
 
             String logs = logCallback.getLogs();
-            log.info("Scan output received from remote host: {} chars", logs.length());
+            log.info("Scan output received: {} chars", logs.length());
 
-            // Step 7: Cleanup remote container
+            // Step 7: Cleanup
             cleanupContainer(containerId);
 
             return logs;
@@ -141,20 +151,20 @@ public class DockerService {
             throw e;
 
         } catch (Exception e) {
-            log.error("Error running container on remote Docker host: {}", e.getMessage(), e);
+            log.error("Error running container: {}", e.getMessage(), e);
             if (containerId != null) cleanupContainer(containerId);
-            throw new ContainerExecutionException("Failed to run container on remote host", e);
+            throw new ContainerExecutionException("Failed to run nmap container", e);
         }
     }
 
     private void cleanupContainer(String containerId) {
         try {
             dockerClient.removeContainerCmd(containerId).withForce(true).exec();
-            log.info("Remote container cleaned up: {}", containerId);
+            log.info("Container cleaned up: {}", containerId);
         } catch (NotFoundException e) {
-            log.warn("Remote container already removed: {}", containerId);
+            log.warn("Container already removed: {}", containerId);
         } catch (Exception e) {
-            log.error("Failed to clean up remote container {}: {}", containerId, e.getMessage());
+            log.error("Failed to clean up container {}: {}", containerId, e.getMessage());
         }
     }
 }

@@ -39,7 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Skip JWT authentication for public endpoints
         if (isPublicEndpoint(request.getServletPath())) {
             filterChain.doFilter(request, response);
             return;
