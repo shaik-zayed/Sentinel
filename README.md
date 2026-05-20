@@ -34,7 +34,7 @@ on-demand and cached in MinIO object storage.
 
 ## Architecture
 
-![Architecture Diagram](./assets/architecture.svg)
+![Architecture Diagram](assets/architecture_transparent.svg)
 
 ## Flow Diagram
 
