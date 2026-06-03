@@ -48,6 +48,7 @@ public class RefreshToken {
     private Instant lastUsedAt;
 
     @Column(name = "revoked", nullable = false)
+    @Builder.Default
     private boolean revoked = false;
 
     @Column(name = "revoked_at")

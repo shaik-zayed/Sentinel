@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sentinel.authservice.dto.*;
@@ -100,14 +101,13 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/verify-email")
+    @GetMapping("/verify-email")
     @Operation(summary = "Verify user email address")
-    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody EmailVerificationDto dto) {
+    public ResponseEntity<Map<String, String>> verifyEmail(
+            @RequestParam @NotBlank String token) {
 
-        userService.verifyEmail(dto.getToken());
-        return ResponseEntity.ok(Map.of(
-                "message", "Email verified successfully"
-        ));
+        userService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 
     @PostMapping("/resend-verification")

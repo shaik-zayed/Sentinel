@@ -15,5 +15,6 @@ public class AuthResponse {
     private UUID userId;
     private String email;
     private long expiresIn;
+    @Builder.Default
     private String tokenType = "Bearer";
 }
