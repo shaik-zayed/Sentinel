@@ -5,6 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sentinel.scanservice.model.ScanRequest;
+import org.sentinel.scanservice.model.enums.PortMode;
+import org.sentinel.scanservice.model.enums.Protocol;
+import org.sentinel.scanservice.model.enums.ScanMode;
 
 import java.util.List;
 
@@ -26,12 +29,12 @@ class ScanCommandBuilderTest {
 
     @Nested
     @DisplayName("protocol flags")
-    class Protocol {
+    class ScanProtocol {
 
         @Test
         void tcpProtocolUsesSynScan() {
             ScanRequest req = minimal("example.com");
-            req.setProtocol("TCP");
+            req.setProtocol(Protocol.TCP);
 
             List<String> cmd = builder.buildCommand(req);
 
@@ -43,7 +46,7 @@ class ScanCommandBuilderTest {
         @Test
         void udpScanWhenProtocolIsUDP() {
             ScanRequest req = minimal("example.com");
-            req.setProtocol("UDP");
+            req.setProtocol(Protocol.UDP);
 
             List<String> cmd = builder.buildCommand(req);
 
@@ -142,7 +145,7 @@ class ScanCommandBuilderTest {
         @Test
         void top100PortsWhenCommonModeAndTop100Value() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("COMMON");
+            req.setPortMode(PortMode.COMMON);
             req.setPortValue("top-100");
 
             List<String> cmd = builder.buildCommand(req);
@@ -155,7 +158,7 @@ class ScanCommandBuilderTest {
         @Test
         void top1000PortsWhenCommonModeAndTop1000Value() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("COMMON");
+            req.setPortMode(PortMode.COMMON);
             req.setPortValue("top-1000");
 
             List<String> cmd = builder.buildCommand(req);
@@ -168,7 +171,7 @@ class ScanCommandBuilderTest {
         @Test
         void specificPortsWhenListMode() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue("80,443,8080");
 
             List<String> cmd = builder.buildCommand(req);
@@ -181,7 +184,7 @@ class ScanCommandBuilderTest {
         @Test
         void portRangesAllowedInListMode() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue("1-1024,8080,9000-9100");
 
             List<String> cmd = builder.buildCommand(req);
@@ -194,34 +197,29 @@ class ScanCommandBuilderTest {
         @Test
         void nonNumericCharsStrippedFromPortList() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue("80abc,443");
 
-            List<String> cmd = builder.buildCommand(req);
-
-            int idx = cmd.indexOf("-p");
-            String sanitized = cmd.get(idx + 1);
-            assertThat(sanitized)
-                    .doesNotContain("abc")
-                    .contains("80")
-                    .contains("443");
+            assertThatThrownBy(() -> builder.buildCommand(req))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Invalid port spec '80abc'. Use individual ports (80,443), ranges (9000-10000), or a mix.");
         }
 
         @Test
         void emptyPortValueInListModeThrows() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue("");
 
             assertThatThrownBy(() -> builder.buildCommand(req))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Port value required");
+                    .hasMessageContaining("PortValue is required for LIST mode");
         }
 
         @Test
         void nullPortValueInListModeThrows() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue(null);
 
             assertThatThrownBy(() -> builder.buildCommand(req))
@@ -231,7 +229,7 @@ class ScanCommandBuilderTest {
         @Test
         void purelyNonNumericPortValueThrowsAfterSanitization() {
             ScanRequest req = minimal("example.com");
-            req.setPortMode("LIST");
+            req.setPortMode(PortMode.LIST);
             req.setPortValue("abc;xyz");
 
             assertThatThrownBy(() -> builder.buildCommand(req))
@@ -245,12 +243,12 @@ class ScanCommandBuilderTest {
 
     @Nested
     @DisplayName("scan mode timing")
-    class ScanMode {
+    class ScanModeTest {
 
         @Test
         void deepModeSetsT4AndAggressive() {
             ScanRequest req = minimal("example.com");
-            req.setScanMode("DEEP");
+            req.setScanMode(ScanMode.DEEP);
 
             List<String> cmd = builder.buildCommand(req);
 
@@ -260,7 +258,7 @@ class ScanCommandBuilderTest {
         @Test
         void lightModeSetsT3() {
             ScanRequest req = minimal("example.com");
-            req.setScanMode("LIGHT");
+            req.setScanMode(ScanMode.LIGHT);
 
             List<String> cmd = builder.buildCommand(req);
 
@@ -277,6 +275,18 @@ class ScanCommandBuilderTest {
             List<String> cmd = builder.buildCommand(req);
 
             assertThat(cmd).contains("-T3");
+        }
+
+        @Test
+        void deepModeRejectsUdp() {
+            ScanRequest req = minimal("example.com");
+            req.setScanMode(ScanMode.DEEP);
+            req.setProtocol(Protocol.UDP);
+
+            assertThatThrownBy(() -> builder.buildCommand(req))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(
+                            "Deep scan mode (which includes OS detection) is not supported with UDP scans.");
         }
     }
 
@@ -325,17 +335,17 @@ class ScanCommandBuilderTest {
     void fullDeepScanCommand() {
         ScanRequest req = new ScanRequest();
         req.setTarget("scanme.nmap.org");
-        req.setProtocol("TCP");
-        req.setScanMode("DEEP");
+        req.setProtocol(Protocol.TCP);
+        req.setScanMode(ScanMode.DEEP);
         req.setDetectServiceVersion(true);
         req.setDetectOs(true);
-        req.setPortMode("LIST");
+        req.setPortMode(PortMode.LIST);
         req.setPortValue("80,443,22");
 
         List<String> cmd = builder.buildCommand(req);
 
         assertThat(cmd)
-                .contains("-sS", "-sV", "-O", "-T4", "-A", "-p", "-oX");
+                .contains("-sS", "-T4", "-A", "-p", "-oX");
         assertThat(cmd.get(cmd.size() - 1)).isEqualTo("scanme.nmap.org");
     }
 
@@ -346,8 +356,8 @@ class ScanCommandBuilderTest {
     private ScanRequest minimal(String target) {
         ScanRequest req = new ScanRequest();
         req.setTarget(target);
-        req.setScanMode("LIGHT");
-        req.setProtocol("TCP");
+        req.setScanMode(ScanMode.LIGHT);
+        req.setProtocol(Protocol.TCP);
         req.setDetectServiceVersion(false);
         req.setDetectOs(false);
         return req;

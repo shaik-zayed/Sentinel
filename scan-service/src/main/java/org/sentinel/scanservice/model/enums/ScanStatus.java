@@ -1,4 +1,4 @@
-package org.sentinel.scanservice.model;
+package org.sentinel.scanservice.model.enums;
 
 public enum ScanStatus {
     ACCEPTED,

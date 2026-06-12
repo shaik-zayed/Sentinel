@@ -8,7 +8,7 @@ import org.sentinel.scanservice.exception.ForbiddenException;
 import org.sentinel.scanservice.exception.NotFoundException;
 import org.sentinel.scanservice.model.FindingsResponse;
 import org.sentinel.scanservice.model.ScanItem;
-import org.sentinel.scanservice.model.ScanStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.sentinel.scanservice.repo.FindingRepository;
 import org.sentinel.scanservice.repo.ScanItemRepository;
 import org.springframework.stereotype.Service;

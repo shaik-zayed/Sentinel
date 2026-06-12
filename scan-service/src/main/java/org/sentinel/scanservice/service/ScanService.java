@@ -11,6 +11,7 @@ import org.sentinel.scanservice.exception.BadRequestException;
 import org.sentinel.scanservice.exception.ForbiddenException;
 import org.sentinel.scanservice.exception.NotFoundException;
 import org.sentinel.scanservice.model.*;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.sentinel.scanservice.repo.ScanItemRepository;
 import org.sentinel.scanservice.repo.ScanOutboxEventRepository;
 import org.sentinel.scanservice.repo.ScanRequestRepository;

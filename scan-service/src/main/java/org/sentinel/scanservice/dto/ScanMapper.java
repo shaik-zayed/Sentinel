@@ -1,7 +1,7 @@
 package org.sentinel.scanservice.dto;
 
 import org.sentinel.scanservice.model.ScanItem;
-import org.sentinel.scanservice.model.ScanStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sentinel.scanservice.model.ScanCommandMessage;
 import org.sentinel.scanservice.model.ScanOutboxEvent;
-import org.sentinel.scanservice.model.ScanStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.sentinel.scanservice.repo.ScanItemRepository;
 import org.sentinel.scanservice.repo.ScanOutboxEventRepository;
 import org.springframework.scheduling.annotation.Scheduled;

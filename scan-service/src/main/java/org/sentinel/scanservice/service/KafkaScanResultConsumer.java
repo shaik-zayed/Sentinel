@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sentinel.scanservice.model.ScanItem;
 import org.sentinel.scanservice.model.ScanResultMessage;
-import org.sentinel.scanservice.model.ScanStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.sentinel.scanservice.repo.ScanItemRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;

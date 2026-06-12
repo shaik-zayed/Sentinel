@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.sentinel.scanservice.model.enums.Protocol;
+import org.sentinel.scanservice.model.enums.ScanMode;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +24,6 @@ public class ScanCommandMessage {
     private String target;
     private Instant timestamp;
     private String replyTopic;
-    private String scanMode;
-    private String protocol;
+    private ScanMode scanMode;
+    private Protocol protocol;
 }

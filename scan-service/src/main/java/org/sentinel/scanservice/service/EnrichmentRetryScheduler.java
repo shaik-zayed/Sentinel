@@ -2,7 +2,7 @@ package org.sentinel.scanservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sentinel.scanservice.model.EnrichmentStatus;
+import org.sentinel.scanservice.model.enums.EnrichmentStatus;
 import org.sentinel.scanservice.model.ScanItem;
 import org.sentinel.scanservice.repo.ScanItemRepository;
 import org.springframework.scheduling.annotation.Scheduled;

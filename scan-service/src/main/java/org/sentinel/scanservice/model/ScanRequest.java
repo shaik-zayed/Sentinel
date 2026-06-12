@@ -1,14 +1,15 @@
 package org.sentinel.scanservice.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.sentinel.scanservice.model.enums.PortMode;
+import org.sentinel.scanservice.model.enums.Protocol;
+import org.sentinel.scanservice.model.enums.ScanMode;
 
 import java.util.UUID;
 
@@ -25,16 +26,20 @@ public class ScanRequest {
     @NotBlank(message = "Target is required")
     private String target;              // "192.168.1.1" or "example.com"
 
-    private String scanMode;            // "LIGHT" or "DEEP"
+    @NotNull(message = "scanMode is required")
+    @Enumerated(EnumType.STRING)
+    private ScanMode scanMode;
 
-    // Scan Options
     private boolean detectServiceVersion; // Toggle: "Detect service version"
     private boolean detectOs;             // Toggle: "Detect operating system"
 
-    // Protocol
-    private String protocol;              // "TCP" or "UDP"
+    @NotNull(message = "protocol is required")
+    @Enumerated(EnumType.STRING)
+    private Protocol protocol;
 
-    // Port Selection
-    private String portMode;              // "COMMON" or "LIST"
-    private String portValue;             // "top-100", "top-1000", or "80,443,8080"
+    @NotNull(message = "portMode is required")
+    @Enumerated(EnumType.STRING)
+    private PortMode portMode;
+
+    private String portValue;
 }

@@ -3,7 +3,7 @@ package org.sentinel.scanservice.service;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sentinel.scanservice.model.EnrichmentStatus;
+import org.sentinel.scanservice.model.enums.EnrichmentStatus;
 import org.sentinel.scanservice.model.Finding;
 import org.sentinel.scanservice.repo.FindingRepository;
 import org.sentinel.scanservice.repo.ScanItemRepository;

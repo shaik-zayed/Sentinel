@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.sentinel.scanservice.model.enums.EnrichmentStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 
 import java.time.Instant;
 import java.util.List;

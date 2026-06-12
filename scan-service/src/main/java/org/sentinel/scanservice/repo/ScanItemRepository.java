@@ -1,8 +1,8 @@
 package org.sentinel.scanservice.repo;
 
-import org.sentinel.scanservice.model.EnrichmentStatus;
+import org.sentinel.scanservice.model.enums.EnrichmentStatus;
 import org.sentinel.scanservice.model.ScanItem;
-import org.sentinel.scanservice.model.ScanStatus;
+import org.sentinel.scanservice.model.enums.ScanStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
